@@ -168,6 +168,11 @@ it("envoie un seul e-mail par compte avec les rappels dus, une seule fois, sauf 
 	await envoyerRappels(env, "2027-01-10");
 	expect(pour("r4a@example.com")).toHaveLength(1);
 	expect(pour("r4b@example.com")).toHaveLength(0);
+	// Ses rappels sont marqués traités : réactiver les e-mails ne les renverra pas en bloc.
+	const silencieux = await env.DB.prepare(
+		"select email_envoye from reminder where titre = 'Silencieux'",
+	).first<{ email_envoye: number }>();
+	expect(silencieux?.email_envoye).toBe(1);
 	const texte = pour("r4a@example.com")[0].texte;
 	expect(texte).toContain("Aujourd'hui");
 	expect(texte).toContain("En retard, prévu le 05/01/2027");

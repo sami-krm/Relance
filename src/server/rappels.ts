@@ -203,6 +203,15 @@ export async function envoyerRappels(env: Env, aujourdhui: string) {
 		)
 		.orderBy(asc(rappel.date));
 
+	// E-mails désactivés : on marque ces rappels comme traités, sinon ils partiraient tous d'un coup à la réactivation.
+	const silencieux = dus
+		.filter((r) => r.emailsRappel === false)
+		.map((r) => r.id);
+	if (silencieux.length)
+		await db
+			.update(rappel)
+			.set({ emailEnvoye: true })
+			.where(inArray(rappel.id, silencieux));
 	const parCompte = Map.groupBy(
 		dus.filter((r) => r.emailsRappel !== false),
 		(r) => r.email,

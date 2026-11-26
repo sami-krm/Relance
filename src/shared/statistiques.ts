@@ -19,10 +19,11 @@ export function statistiques(
 	const aFaire = rappels.filter((r) => r.statut === "a_faire");
 	return {
 		enCours: candidatures.filter((c) => enCours.includes(c.statut)).length,
-		envoyeesSemaine: candidatures.filter(
+		// Un brouillon peut porter une date d'envoi prévue : il ne compte pas comme envoyé.
+		envoyeesSemaine: envoyees.filter(
 			(c) => c.dateEnvoi >= lundi && c.dateEnvoi <= aujourdhui,
 		).length,
-		envoyeesMois: candidatures.filter((c) =>
+		envoyeesMois: envoyees.filter((c) =>
 			c.dateEnvoi.startsWith(aujourdhui.slice(0, 7)),
 		).length,
 		entretiensAVenir: aFaire.filter(

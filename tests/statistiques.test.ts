@@ -12,6 +12,7 @@ it("calcule les chiffres du tableau de bord", () => {
 			{ statut: "entretien", dateEnvoi: "2026-11-22" },
 			{ statut: "refusee", dateEnvoi: "2026-10-30" },
 			{ statut: "abandonnee", dateEnvoi: "2026-11-02" },
+			{ statut: "brouillon", dateEnvoi: "2026-11-24" },
 		],
 		[
 			{ type: "entretien", date: "2026-11-30", statut: "a_faire" },
@@ -31,7 +32,7 @@ it("calcule les chiffres du tableau de bord", () => {
 		reponses: 2,
 		tauxReponse: 50,
 	});
-	expect(s.parStatut.find((p) => p.statut === "brouillon")?.nombre).toBe(1);
+	expect(s.parStatut.find((p) => p.statut === "brouillon")?.nombre).toBe(2);
 });
 
 it("ne donne pas de taux de réponse sans candidature envoyée", () => {
