@@ -106,6 +106,15 @@ export function Confidentialite() {
 					position de la ville et la distance. Aucun de ces services ne reçoit
 					votre nom, votre adresse e-mail ou votre CV.
 				</li>
+				<li>
+					Seulement si vous avez donné votre accord pour les brouillons par IA :
+					Cloudflare Workers AI (modèle Mistral Small 3.1) reçoit les champs de
+					votre profil que vous avez autorisés au partage et la candidature
+					concernée, pour rédiger le brouillon demandé. Ce calcul peut avoir
+					lieu hors de l'Union européenne. Votre CV n'est jamais envoyé. Base
+					légale : votre consentement (article 6.1.a du RGPD), que vous pouvez
+					retirer à tout moment dans les paramètres.
+				</li>
 				<li>Aucun autre service.</li>
 			</ul>
 			<h2>Durée de conservation</h2>

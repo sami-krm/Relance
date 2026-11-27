@@ -27,6 +27,7 @@ import {
 	statuts,
 } from "../shared/schemas";
 import { api, json } from "./api";
+import { BrouillonsIa } from "./ia";
 import { RappelsCandidature } from "./rappels";
 import { useRessource } from "./repertoire";
 import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
@@ -1039,6 +1040,14 @@ export function PageCandidature() {
 					<p className="mt-2 whitespace-pre-line">{c.lettre}</p>
 				</details>
 			)}
+
+			<BrouillonsIa
+				candidatureId={c.id}
+				poste={c.poste}
+				spontanee={!c.offreId}
+				envoyee={c.statut !== "brouillon"}
+				onUtiliserLettre={(lettre) => candidatures.modifier(c.id, { lettre })}
+			/>
 
 			<RappelsCandidature candidatureId={c.id} poste={c.poste} />
 

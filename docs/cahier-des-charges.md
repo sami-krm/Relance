@@ -173,8 +173,7 @@ Les chiffres sont calculés uniquement à partir des candidatures de l'utilisate
   - Préparer les réponses.
   - Voir les informations manquantes.
   - Enregistrer en brouillon.
-- Modes d'envoi, affichés honnêtement pour chaque offre :
-  - **Envoi via l'API La bonne alternance**, pour les offres qui l'acceptent.
+- Modes d'envoi, affichés honnêtement pour chaque offre (l'envoi via l'API La bonne alternance est réservé à ses plateformes partenaires et n'est pas proposé) :
   - **E-mail préparé** que l'utilisateur ouvre et envoie depuis sa propre messagerie. Relance n'envoie rien elle-même.
   - **Candidature sur le site de l'offre** : lien et aide guidée, l'utilisateur postule lui-même.
 - Écran d'aperçu obligatoire avant tout envoi, qui affiche :
@@ -220,7 +219,7 @@ Voir `architecture-relance.md`.
   - Connexion par lien e-mail.
   - E-mails de connexion et de rappel envoyés par Brevo.
   - Base et fichiers hébergés en UE (Cloudflare D1 et R2).
-- **Reste à choisir pour la V2 :** le modèle de Workers AI, qui doit bien écrire en français et consommer peu du quota quotidien.
+- **Modèle de Workers AI pour la V2 :** Mistral Small 3.1 24B, qui écrit bien en français (environ 75 Neurons par lettre).
 
 ## Consignes de réalisation
 

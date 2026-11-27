@@ -413,3 +413,29 @@ export type ResultatRecherche = {
 	sources: { nom: SourceOffres; ok: boolean; message?: string }[];
 	avertissement?: string;
 };
+
+// Brouillons par IA (V2) : jamais de CV, toujours modifiables.
+export const typesBrouillon = {
+	lettre: "Lettre de motivation",
+	relance: "E-mail de relance",
+	spontanee: "E-mail de candidature spontanée",
+	reponses: "Réponses aux questions",
+} as const;
+export type TypeBrouillon = keyof typeof typesBrouillon;
+export const QUOTA_IA = 10;
+
+export const brouillonSchema = z.object({
+	type: z.enum(
+		Object.keys(typesBrouillon) as [TypeBrouillon, ...TypeBrouillon[]],
+	),
+	candidatureId: z.string().min(1),
+	questions: z.string().trim().max(3000).default(""),
+});
+
+export type EtatIa = { accord: boolean; restant: number; quota: number };
+// Exactement ce qui part vers le service d'IA, montré à l'utilisateur avant envoi.
+export type DonneesIa = {
+	service: string;
+	profil: { libelle: string; valeur: string }[];
+	candidature: { libelle: string; valeur: string }[];
+};

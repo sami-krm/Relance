@@ -77,6 +77,12 @@
 - **Ajout depuis un lien** : Relance lit la page de l'offre (données schema.org `JobPosting`, sinon titre et description) et préremplit le formulaire ; une page illisible passe en saisie manuelle. Seules les adresses web publiques sont lues.
 - **Offres expirées signalées** : chaque matin, les offres ajoutées sont vérifiées auprès de La bonne alternance (pourvue, annulée, retirée ou date passée).
 
+### ✍️ Brouillons avec l'IA (V2)
+- Lettre de motivation, e-mail de relance, e-mail de candidature spontanée et réponses aux questions d'un formulaire, rédigés par **Cloudflare Workers AI** (Mistral Small 3.1). **Jamais de CV.**
+- **Accord préalable** après avoir vu exactement les données envoyées : seuls les champs du profil autorisés au partage et la candidature concernée. Accord retirable dans les paramètres.
+- Le modèle n'utilise que ces données et écrit « [à compléter] » plutôt que d'inventer. Le texte reste un brouillon modifiable.
+- **10 brouillons par jour et par compte** ; quota atteint ou service indisponible : Relance le dit, sans repli vers un service payant.
+
 ### 📊 Tableau de bord et données
 - Candidatures en cours, envoyées dans la semaine et le mois, entretiens à venir, rappels, réponses et **taux de réponse**, répartition par statut.
 - **Export CSV** des candidatures, prêt pour Excel.
@@ -92,6 +98,7 @@
 | Données | Cloudflare D1 (SQLite) avec Drizzle ORM et ses migrations, Cloudflare R2 pour les PDF |
 | Comptes | Better Auth (lien magique), limitation de débit Cloudflare |
 | E-mails | Brevo (connexion et rappels) |
+| IA | Cloudflare Workers AI, Mistral Small 3.1 (brouillons, avec accord) |
 | Offres | API La bonne alternance, ROMEO (France Travail), geo.api.gouv.fr |
 | Tâche planifiée | Cron Trigger Cloudflare, chaque matin |
 | Qualité | Vitest dans le runtime Workers, Biome, TypeScript strict, GitHub Actions |

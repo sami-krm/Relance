@@ -11,6 +11,7 @@ import {
 } from "../shared/schemas";
 import { api, json } from "./api";
 import { MesDonnees } from "./compte";
+import { AccordIa } from "./ia";
 import { useRessource } from "./repertoire";
 import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
 
@@ -460,6 +461,7 @@ export function PageParametres() {
 	return (
 		<>
 			<FormulaireReglages initial={reglages} />
+			<AccordIa />
 			<MesDonnees />
 		</>
 	);

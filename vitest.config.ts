@@ -5,6 +5,8 @@ export default defineConfig({
 	plugins: [
 		cloudflareTest(async () => ({
 			wrangler: { configPath: "./wrangler.jsonc" },
+			// Workers AI est simulé dans les tests : aucune connexion à Cloudflare, en local comme en CI.
+			remoteBindings: false,
 			miniflare: {
 				bindings: {
 					TEST_MIGRATIONS: await readD1Migrations("./migrations"),

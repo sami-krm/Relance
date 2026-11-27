@@ -7,6 +7,7 @@ import { routesCandidatures } from "./candidatures";
 import { routesCompte } from "./compte";
 import { routesDocuments } from "./documents";
 import { verifierExpirations } from "./expiration";
+import { routesIa } from "./ia";
 import { routesProfil } from "./profil";
 import {
 	aujourdhuiParis,
@@ -66,6 +67,7 @@ app.route("/candidatures", routesCandidatures);
 app.route("/rappels", routesRappels);
 app.route("/reglages", routesReglages);
 app.route("/compte", routesCompte);
+app.route("/ia", routesIa);
 
 export default {
 	fetch: app.fetch,

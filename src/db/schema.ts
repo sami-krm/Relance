@@ -281,6 +281,11 @@ export const preference = sqliteTable("preference", {
 	emailsRappel: integer("emails_rappel", { mode: "boolean" })
 		.notNull()
 		.default(true),
+	// Accord pour les brouillons par IA (AAAA-MM-JJ), vide sans accord ou après retrait.
+	iaAccordLe: texte("ia_accord_le"),
+	// Générations du jour, pour la limite par compte.
+	iaJour: texte("ia_jour"),
+	iaNombre: integer("ia_nombre").notNull().default(0),
 	...horodatage(),
 });
 
