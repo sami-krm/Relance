@@ -3,18 +3,17 @@ import {
 	type OffreTrouvee,
 	type ResultatRecherche,
 	rechercheSchema,
-	type SourceOffres,
 } from "../shared/schemas";
 import { type Contexte, exigerSession } from "./session";
 
 const FT_JETON =
 	"https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire";
-const FT_OFFRES =
-	"https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search";
+const ROMEO =
+	"https://api.francetravail.io/partenaire/romeo/v2/predictionMetiers";
 const LBA_OFFRES = "https://api.apprentissage.beta.gouv.fr/api/job/v1/search";
 const GEO = "https://geo.api.gouv.fr/communes";
 
-type Commune = { code: string; latitude: number; longitude: number };
+type Commune = { latitude: number; longitude: number };
 
 // Jeton France Travail gardé en mémoire de l'isolat jusqu'à une minute avant son expiration.
 let jetonFT: { valeur: string; expire: number } | undefined;
@@ -28,7 +27,7 @@ async function jetonFranceTravail(env: Env) {
 			grant_type: "client_credentials",
 			client_id: env.FRANCE_TRAVAIL_CLIENT_ID,
 			client_secret: env.FRANCE_TRAVAIL_CLIENT_SECRET,
-			scope: "api_offresdemploiv2 o2dsoffre",
+			scope: "api_romeov2",
 		}),
 	});
 	// La réponse d'erreur OAuth (error, error_description) ne contient pas de secret.
@@ -45,65 +44,35 @@ async function jetonFranceTravail(env: Env) {
 	return access_token;
 }
 
-type OffreFT = {
-	id: string;
-	intitule: string;
-	description?: string;
-	dateCreation?: string;
-	romeCode?: string;
-	lieuTravail?: { libelle?: string };
-	entreprise?: { nom?: string };
-	origineOffre?: { urlOrigine?: string };
-};
-
-async function franceTravail(
-	env: Env,
-	motsCles: string,
-	commune: Commune | undefined,
-	distance: number,
-) {
-	const params = new URLSearchParams({
-		range: "0-49",
-		// Contrat d'apprentissage et contrat de professionnalisation.
-		natureContrat: "E2,FS",
-	});
-	if (motsCles) params.set("motsCles", motsCles);
-	if (commune) {
-		params.set("commune", commune.code);
-		params.set("distance", String(distance));
-	}
-	const res = await fetch(`${FT_OFFRES}?${params}`, {
+// ROMEO (France Travail) traduit les mots-clés en métiers du ROME : La bonne alternance ne cherche pas par mots-clés.
+async function metiersRome(env: Env, motsCles: string) {
+	const res = await fetch(ROMEO, {
+		method: "POST",
 		headers: {
 			authorization: `Bearer ${await jetonFranceTravail(env)}`,
+			"content-type": "application/json",
 			accept: "application/json",
 		},
+		body: JSON.stringify({
+			appellations: [{ intitule: motsCles, identifiant: "1" }],
+			options: { nomAppelant: "relance", nbResultats: 3 },
+		}),
 	});
-	if (res.status === 204) return [];
-	if (!res.ok) throw new Error(`offres ${res.status}`);
-	const { resultats = [] } = await res.json<{ resultats?: OffreFT[] }>();
-	return resultats;
+	if (!res.ok) throw new Error(`romeo ${res.status}`);
+	const [prediction] =
+		await res.json<
+			{ metiersRome?: { codeRome: string; libelleRome: string }[] }[]
+		>();
+	// Plusieurs appellations peuvent appartenir au même métier.
+	return [
+		...new Map(
+			(prediction?.metiersRome ?? []).map((m) => [m.codeRome, m.libelleRome]),
+		),
+	];
 }
 
-const depuisFT = (o: OffreFT): OffreTrouvee => ({
-	source: "France Travail",
-	idSource: o.id,
-	intitule: o.intitule,
-	entreprise: o.entreprise?.nom ?? "",
-	lieu: o.lieuTravail?.libelle ?? "",
-	lien:
-		o.origineOffre?.urlOrigine ??
-		`https://candidat.francetravail.fr/offres/recherche/detail/${o.id}`,
-	datePublication: o.dateCreation?.slice(0, 10) ?? "",
-	dateDebut: "",
-	description: o.description ?? "",
-});
-
 type OffreLBA = {
-	identifier: {
-		id: string | null;
-		partner_job_id: string;
-		partner_label: string;
-	};
+	identifier: { id: string | null; partner_job_id: string };
 	workplace: {
 		name: string | null;
 		legal_name: string | null;
@@ -145,7 +114,6 @@ async function bonneAlternance(
 		octets: texte.length,
 		jobs: jobs.length,
 		recruiters: recruiters.length,
-		octetsRecruiters: JSON.stringify(recruiters).length,
 	});
 	return jobs;
 }
@@ -165,34 +133,19 @@ const depuisLBA = (o: OffreLBA): OffreTrouvee => ({
 async function trouverCommune(ville: string): Promise<Commune | undefined> {
 	const params = new URLSearchParams({
 		nom: ville,
-		fields: "code,centre",
+		fields: "centre",
 		boost: "population",
 		limit: "1",
 	});
 	const res = await fetch(`${GEO}?${params}`);
 	if (!res.ok) throw new Error(`commune ${res.status}`);
-	const [c] =
-		await res.json<
-			{ code: string; centre: { coordinates: [number, number] } }[]
-		>();
+	const [c] = await res.json<{ centre: { coordinates: [number, number] } }[]>();
 	return (
 		c && {
-			code: c.code,
 			longitude: c.centre.coordinates[0],
 			latitude: c.centre.coordinates[1],
 		}
 	);
-}
-
-// Codes ROME les plus fréquents parmi les offres France Travail : La bonne alternance ne cherche pas par mots-clés.
-function romesFrequents(offres: OffreFT[]) {
-	const n = new Map<string, number>();
-	for (const o of offres)
-		if (o.romeCode) n.set(o.romeCode, (n.get(o.romeCode) ?? 0) + 1);
-	return [...n]
-		.sort((a, b) => b[1] - a[1])
-		.slice(0, 3)
-		.map(([r]) => r);
 }
 
 const motsDe = (s: string) =>
@@ -203,66 +156,81 @@ const motsDe = (s: string) =>
 		.split(/[^a-z0-9]+/)
 		.filter(Boolean);
 
-const indisponible = (nom: SourceOffres, e: unknown) => {
-	console.error(`recherche ${nom}`, e);
-	return { nom, ok: false, message: "Source indisponible pour le moment." };
-};
-
 export const routesRecherche = new Hono<Contexte>()
 	.use(exigerSession)
 	.get("/", async (c) => {
 		const r = rechercheSchema.safeParse(c.req.query());
 		if (!r.success) return c.json({ message: "Recherche invalide." }, 400);
 		const { motsCles, ville, distance } = r.data;
+		if (!motsCles && !ville)
+			return c.json({ message: "Indiquez des mots-clés ou une ville." }, 400);
+
 		let commune: Commune | undefined;
 		if (ville) {
 			commune = await trouverCommune(ville).catch(() => undefined);
 			if (!commune)
 				return c.json({ message: `Ville introuvable : « ${ville} ».` }, 400);
 		}
-		const sources: ResultatRecherche["sources"] = [];
 
-		let ft: OffreFT[] = [];
-		let ftOk = false;
-		try {
-			ft = await franceTravail(c.env, motsCles, commune, distance);
-			ftOk = true;
-			sources.push({ nom: "France Travail", ok: true });
-		} catch (e) {
-			sources.push(indisponible("France Travail", e));
-		}
-
-		let lba: OffreTrouvee[] = [];
-		const romes = romesFrequents(ft);
-		// Sans code ROME ni lieu, La bonne alternance renverrait toute la France sans rapport avec la recherche.
-		if (romes.length || commune) {
+		let metiers: [string, string][] = [];
+		let avertissement: string | undefined;
+		if (motsCles)
 			try {
-				lba = (await bonneAlternance(c.env, romes, commune, distance))
-					// Les offres France Travail reprises par La bonne alternance sont déjà dans la liste.
-					.filter(
-						(o) =>
-							!(ftOk && /france travail/i.test(o.identifier.partner_label)),
-					)
-					.map(depuisLBA);
-				// Sans codes ROME, on garde les offres dont l'intitulé contient un des mots-clés.
-				const mots = motsDe(motsCles);
-				if (!romes.length && mots.length)
-					lba = lba.filter((o) =>
-						motsDe(o.intitule).some((m) => mots.includes(m)),
-					);
-				sources.push({ nom: "La bonne alternance", ok: true });
+				metiers = await metiersRome(c.env, motsCles);
 			} catch (e) {
-				sources.push(indisponible("La bonne alternance", e));
+				console.error("recherche ROMEO", e);
+				avertissement =
+					"Les métiers n'ont pas pu être reconnus : seuls les intitulés contenant vos mots-clés sont affichés.";
 			}
-		} else
-			sources.push({
-				nom: "La bonne alternance",
-				ok: false,
-				message: "Indiquez une ville pour chercher sur cette source.",
+		// Sans métier ni lieu, La bonne alternance renverrait toute la France sans rapport avec la recherche.
+		if (!metiers.length && !commune)
+			return c.json<ResultatRecherche>({
+				offres: [],
+				metiers: [],
+				sources: [
+					{
+						nom: "La bonne alternance",
+						ok: false,
+						message:
+							"Aucun métier reconnu : précisez les mots-clés ou indiquez une ville.",
+					},
+				],
+				avertissement,
 			});
 
-		return c.json<ResultatRecherche>({
-			offres: [...ft.map(depuisFT), ...lba],
-			sources,
-		});
+		try {
+			let offres = (
+				await bonneAlternance(
+					c.env,
+					metiers.map(([code]) => code),
+					commune,
+					distance,
+				)
+			).map(depuisLBA);
+			const mots = motsDe(motsCles);
+			if (!metiers.length && mots.length)
+				offres = offres.filter((o) =>
+					motsDe(o.intitule).some((m) => mots.includes(m)),
+				);
+			return c.json<ResultatRecherche>({
+				offres,
+				metiers: metiers.map(([, libelle]) => libelle),
+				sources: [{ nom: "La bonne alternance", ok: true }],
+				avertissement,
+			});
+		} catch (e) {
+			console.error("recherche La bonne alternance", e);
+			return c.json<ResultatRecherche>({
+				offres: [],
+				metiers: metiers.map(([, libelle]) => libelle),
+				sources: [
+					{
+						nom: "La bonne alternance",
+						ok: false,
+						message: "Source indisponible pour le moment.",
+					},
+				],
+				avertissement,
+			});
+		}
 	});

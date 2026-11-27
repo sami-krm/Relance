@@ -304,7 +304,8 @@ export function ajouterJours(iso: string, jours: number) {
 }
 
 // Recherche d'offres (V1.5) : les offres des sources officielles, ramenées à un même format.
-export const sourcesOffres = ["France Travail", "La bonne alternance"] as const;
+// France Travail ne publie plus son API Offres d'emploi : ses offres arrivent via La bonne alternance.
+export const sourcesOffres = ["La bonne alternance"] as const;
 export type SourceOffres = (typeof sourcesOffres)[number];
 
 export const rechercheSchema = z.object({
@@ -327,5 +328,8 @@ export type OffreTrouvee = {
 
 export type ResultatRecherche = {
 	offres: OffreTrouvee[];
+	// Métiers du ROME reconnus à partir des mots-clés, affichés pour que la recherche reste compréhensible.
+	metiers: string[];
 	sources: { nom: SourceOffres; ok: boolean; message?: string }[];
+	avertissement?: string;
 };
