@@ -105,17 +105,23 @@ async function bonneAlternance(
 	});
 	if (!res.ok) throw new Error(`offres ${res.status}`);
 	const texte = await res.text();
-	const { jobs = [], recruiters = [] } = JSON.parse(texte) as {
-		jobs?: OffreLBA[];
-		recruiters?: unknown[];
-	};
+	const { jobs = [] } = lireSansRecruteurs(texte);
 	// Diagnostic temporaire du coût CPU : à retirer une fois mesuré.
-	console.log("lba", {
-		octets: texte.length,
-		jobs: jobs.length,
-		recruiters: recruiters.length,
-	});
+	console.log("lba", { octets: texte.length, jobs: jobs.length });
 	return jobs;
+}
+
+// La réponse joint toujours 150 entreprises (environ 100 Ko) que Relance n'affiche pas : on coupe le texte
+// avant elles pour ne pas les décoder (limite de 10 ms de calcul). Dans une chaîne JSON, un guillemet est
+// toujours échappé, donc `"recruiters":[` ne peut être que la clé elle-même.
+// shortcut: suppose que "recruiters" suit "jobs" ; sinon on décode tout, plus lentement mais correctement.
+export function lireSansRecruteurs(texte: string): { jobs?: OffreLBA[] } {
+	const i = texte.indexOf(',"recruiters":[');
+	if (i > 0 && texte.lastIndexOf('"jobs":', i) > 0)
+		try {
+			return JSON.parse(`${texte.slice(0, i)}}`);
+		} catch {}
+	return JSON.parse(texte);
 }
 
 const depuisLBA = (o: OffreLBA): OffreTrouvee => ({

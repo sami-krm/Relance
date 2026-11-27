@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
+import { lireSansRecruteurs } from "../src/server/recherche";
 import type { ResultatRecherche } from "../src/shared/schemas";
 import { api, connecter } from "./outils";
 
@@ -146,4 +147,13 @@ it("refuse une recherche invalide ou sans connexion", async () => {
 	expect((await api(cookie, "/recherche?distance=999")).status).toBe(400);
 	expect((await api(cookie, "/recherche")).status).toBe(400);
 	expect((await api("", "/recherche?motsCles=web")).status).toBe(401);
+});
+
+it("ignore les entreprises jointes à la réponse sans perdre les offres", () => {
+	const jobs = [{ offer: { title: 'Titre avec \\"recruiters\\":[ dedans' } }];
+	const apres = JSON.stringify({ jobs, recruiters: [{ a: 1 }], warnings: [] });
+	expect(lireSansRecruteurs(apres)).toEqual({ jobs });
+	// Ordre inattendu : décodage complet.
+	const avant = JSON.stringify({ recruiters: [], jobs });
+	expect(lireSansRecruteurs(avant).jobs).toEqual(jobs);
 });
