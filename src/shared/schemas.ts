@@ -302,3 +302,30 @@ export function ajouterJours(iso: string, jours: number) {
 	d.setUTCDate(d.getUTCDate() + jours);
 	return d.toISOString().slice(0, 10);
 }
+
+// Recherche d'offres (V1.5) : les offres des sources officielles, ramenées à un même format.
+export const sourcesOffres = ["France Travail", "La bonne alternance"] as const;
+export type SourceOffres = (typeof sourcesOffres)[number];
+
+export const rechercheSchema = z.object({
+	motsCles: z.string().trim().max(200).default(""),
+	ville: z.string().trim().max(100).default(""),
+	distance: z.coerce.number().int().min(0).max(200).default(30),
+});
+
+export type OffreTrouvee = {
+	source: SourceOffres;
+	idSource: string;
+	intitule: string;
+	entreprise: string;
+	lieu: string;
+	lien: string;
+	datePublication: string;
+	dateDebut: string;
+	description: string;
+};
+
+export type ResultatRecherche = {
+	offres: OffreTrouvee[];
+	sources: { nom: SourceOffres; ok: boolean; message?: string }[];
+};

@@ -6,7 +6,15 @@
 	// Better Auth a besoin d'AsyncLocalStorage, pas du reste de Node.
 	"compatibility_flags": ["nodejs_als"],
 	"vars": { "BETTER_AUTH_URL": "https://relance.skrim.dev" },
-	"secrets": { "required": ["BETTER_AUTH_SECRET", "BREVO_API_KEY"] },
+	"secrets": {
+		"required": [
+			"BETTER_AUTH_SECRET",
+			"BREVO_API_KEY",
+			"FRANCE_TRAVAIL_CLIENT_ID",
+			"FRANCE_TRAVAIL_CLIENT_SECRET",
+			"LBA_API_TOKEN"
+		]
+	},
 	"ratelimits": [
 		{
 			"name": "LIMITE_LIENS",
