@@ -64,7 +64,7 @@
 
 ### 🗂️ Profil, documents, entreprises et offres
 - Profil complet (formation, rythme d'alternance, recherche, parcours), avec pour chaque champ le choix de pouvoir le réutiliser.
-- **CV en PDF** (5 Mo au plus, vérifiés par leur contenu), conservés tels quels ; un CV utilisé par une candidature n'est jamais effacé, seulement masqué.
+- **CV en PDF ou DOCX** (5 Mo au plus, format vérifié par le contenu du fichier), conservés tels quels ; un CV utilisé par une candidature n'est jamais effacé, seulement masqué.
 - Lettres de motivation et réponses types.
 - Entreprises, contacts rattachés et offres saisies à la main, avec leur source et leur statut d'expiration.
 

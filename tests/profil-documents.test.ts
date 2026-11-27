@@ -167,3 +167,34 @@ it("crée, modifie et supprime une lettre de motivation", async () => {
 		(await api(alice, `/documents/${id}`, { method: "DELETE" })).status,
 	).toBe(204);
 });
+
+// Archive ZIP minimale : signature, puis les noms d'entrées qu'on trouve dans son répertoire.
+function zip(...noms: string[]) {
+	const texte = new TextEncoder().encode(`xx${noms.join("\0")}\0`);
+	const octets = new Uint8Array(4 + texte.length);
+	octets.set([0x50, 0x4b, 0x03, 0x04]);
+	octets.set(texte, 4);
+	return octets;
+}
+
+it("accepte un CV DOCX, le garde tel quel et le propose au téléchargement", async () => {
+	const camille = await connecter("docx@exemple.test");
+	const docx = zip("[Content_Types].xml", "word/document.xml");
+	const cree = await envoyerCv(camille, docx, "CV Word");
+	expect(cree.status).toBe(201);
+	const { id } = await cree.json<{ id: string }>();
+	expect(await documents(camille)).toMatchObject([
+		{ id, nom: "CV Word", format: "docx", taille: docx.length },
+	]);
+	const fichier = await api(camille, `/documents/${id}/fichier`);
+	expect(fichier.headers.get("content-type")).toContain("wordprocessingml");
+	expect(fichier.headers.get("content-disposition")).toMatch(
+		/^attachment;.*\.docx$/,
+	);
+	expect(new Uint8Array(await fichier.arrayBuffer())).toEqual(docx);
+
+	// Une autre archive ZIP (tableur, archive quelconque) n'est pas un CV.
+	expect(
+		(await envoyerCv(camille, zip("xl/workbook.xml"), "Tableur")).status,
+	).toBe(400);
+});

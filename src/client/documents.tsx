@@ -72,8 +72,8 @@ export function PageDocuments() {
 					CV
 				</h2>
 				<p className={discret}>
-					PDF de 5 Mo au plus. Relance conserve votre fichier tel quel et ne le
-					modifie jamais.
+					PDF ou document Word (DOCX) de 5 Mo au plus. Relance conserve votre
+					fichier tel quel et ne le modifie jamais.
 				</p>
 				<ImportCv />
 				{cvs.length === 0 ? (
@@ -87,6 +87,7 @@ export function PageDocuments() {
 							>
 								<span className="font-medium">{cv.nom}</span>
 								<span className={`text-sm ${discret}`}>
+									{cv.format === "docx" ? "DOCX" : "PDF"},{" "}
 									{Math.max(1, Math.round((cv.taille ?? 0) / 1024))} Ko, importé
 									le {date(cv.createdAt)}
 								</span>
@@ -102,7 +103,8 @@ export function PageDocuments() {
 										rel="noreferrer"
 										className={boutonSecondaire}
 									>
-										Aperçu<span className="sr-only"> de {cv.nom}</span>
+										{cv.format === "docx" ? "Télécharger" : "Aperçu"}
+										<span className="sr-only"> {cv.nom}</span>
 									</a>
 									{!cv.parDefaut && (
 										<button
@@ -155,7 +157,10 @@ function ImportCv() {
 		mutationFn: (fichier: File) =>
 			api(`/documents/cv?nom=${encodeURIComponent(nom)}`, {
 				method: "POST",
-				headers: { "content-type": "application/pdf" },
+				// Le serveur vérifie le format dans le contenu ; l'en-tête n'est qu'indicatif.
+				headers: {
+					"content-type": fichier.type || "application/octet-stream",
+				},
 				body: fichier,
 			}),
 		onSuccess: rafraichir,
@@ -195,13 +200,13 @@ function ImportCv() {
 				className={champ}
 			/>
 			<label htmlFor="fichier-cv" className="font-medium">
-				Fichier PDF
+				Fichier PDF ou DOCX
 			</label>
 			<input
 				id="fichier-cv"
 				name="fichier"
 				type="file"
-				accept="application/pdf,.pdf"
+				accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
 				required
 			/>
 			<button type="submit" className={bouton} disabled={importer.isPending}>

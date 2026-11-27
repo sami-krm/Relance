@@ -126,6 +126,8 @@ export type Document = {
 	contenu: string | null;
 	parDefaut: boolean;
 	createdAt: string;
+	// Format du fichier pour un CV, null pour un texte.
+	format: "pdf" | "docx" | null;
 };
 
 // Entreprises, contacts et offres : chaînes vides plutôt que null, pour des formulaires simples.

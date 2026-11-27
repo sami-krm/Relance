@@ -10,8 +10,32 @@ import {
 import { bd, type Contexte, exigerSession } from "./session";
 
 const tropGros = { message: "Le fichier doit faire 5 Mo au plus." };
-const estPdf = (octets: ArrayBuffer) =>
-	new TextDecoder().decode(octets.slice(0, 5)) === "%PDF-";
+const DOCX =
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+// Le format se lit dans le contenu, jamais dans le nom ou l'en-tête envoyés.
+// DOCX : une archive ZIP dont le répertoire (à la fin du fichier) contient word/document.xml.
+export function formatCv(octets: ArrayBuffer): "pdf" | "docx" | null {
+	const debut = new Uint8Array(octets, 0, Math.min(5, octets.byteLength));
+	if (new TextDecoder().decode(debut) === "%PDF-") return "pdf";
+	const zip = [0x50, 0x4b, 0x03, 0x04].every((o, i) => debut[i] === o);
+	if (!zip) return null;
+	const fin = new Uint8Array(octets, Math.max(0, octets.byteLength - 65_536));
+	return contientOctets(fin, motif) ? "docx" : null;
+}
+const motif = new TextEncoder().encode("word/document.xml");
+function contientOctets(tas: Uint8Array, aiguille: Uint8Array) {
+	for (
+		let i = tas.indexOf(aiguille[0]);
+		i !== -1;
+		i = tas.indexOf(aiguille[0], i + 1)
+	)
+		if (aiguille.every((o, j) => tas[i + j] === o)) return true;
+	return false;
+}
+const typeMime = { pdf: "application/pdf", docx: DOCX } as const;
+const formatDe = (cleR2: string | null) =>
+	cleR2?.endsWith(".docx") ? "docx" : "pdf";
 
 // Chaque requête est filtrée par l'utilisateur connecté : un document d'un autre compte répond 404.
 const duCompte = (c: { var: { userId: string } }, id: string) =>
@@ -29,13 +53,19 @@ export const routesDocuments = new Hono<Contexte>()
 				contenu: document.contenu,
 				parDefaut: document.parDefaut,
 				createdAt: document.createdAt,
+				cleR2: document.cleR2,
 			})
 			.from(document)
 			.where(and(eq(document.userId, c.var.userId), isNull(document.archiveLe)))
 			.orderBy(desc(document.createdAt));
-		return c.json(docs);
+		return c.json(
+			docs.map(({ cleR2, ...d }) => ({
+				...d,
+				format: d.type === "cv" ? formatDe(cleR2) : null,
+			})),
+		);
 	})
-	// Le PDF arrive brut dans le corps (pas de multipart à analyser) et le nom dans l'URL.
+	// Le fichier (PDF ou DOCX) arrive brut dans le corps (pas de multipart à analyser) et le nom dans l'URL.
 	.post("/cv", async (c) => {
 		const nom = nomDocument.safeParse(c.req.query("nom"));
 		if (!nom.success) return c.json({ message: "Donnez un nom au CV." }, 400);
@@ -45,13 +75,17 @@ export const routesDocuments = new Hono<Contexte>()
 		if (annonce > TAILLE_MAX_CV) return c.json(tropGros, 413);
 		const octets = await c.req.arrayBuffer();
 		if (octets.byteLength > TAILLE_MAX_CV) return c.json(tropGros, 413);
-		if (!estPdf(octets))
-			return c.json({ message: "Le fichier n'est pas un PDF." }, 400);
+		const format = formatCv(octets);
+		if (!format)
+			return c.json(
+				{ message: "Le fichier doit être un PDF ou un document Word (DOCX)." },
+				400,
+			);
 
 		const id = crypto.randomUUID();
-		const cleR2 = `${c.var.userId}/${id}.pdf`;
+		const cleR2 = `${c.var.userId}/${id}.${format}`;
 		await c.env.DOCUMENTS.put(cleR2, octets, {
-			httpMetadata: { contentType: "application/pdf" },
+			httpMetadata: { contentType: typeMime[format] },
 		});
 		try {
 			const dejaUnCv = await bd(c.env)
@@ -100,10 +134,12 @@ export const routesDocuments = new Hono<Contexte>()
 		const objet = doc?.cleR2 && (await c.env.DOCUMENTS.get(doc.cleR2));
 		if (!doc || !objet)
 			return c.json({ message: "Document introuvable." }, 404);
+		const format = formatDe(doc.cleR2);
+		// Un PDF s'affiche dans le navigateur ; un DOCX se télécharge.
 		return new Response(objet.body, {
 			headers: {
-				"content-type": "application/pdf",
-				"content-disposition": `inline; filename*=UTF-8''${encodeURIComponent(doc.nom)}.pdf`,
+				"content-type": typeMime[format],
+				"content-disposition": `${format === "pdf" ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(doc.nom)}.${format}`,
 				"x-content-type-options": "nosniff",
 				"cache-control": "private, no-store",
 			},
