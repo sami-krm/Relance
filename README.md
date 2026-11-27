@@ -67,6 +67,13 @@
 - Lettres de motivation et réponses types.
 - Entreprises, contacts rattachés et offres saisies à la main, avec leur source et leur statut d'expiration.
 
+### 🔎 Recherche d'offres
+- Recherche d'offres d'alternance via l'API officielle **La bonne alternance**, qui inclut les offres de France Travail.
+- Les mots-clés sont traduits en métiers du ROME par **ROMEO** (France Travail), affichés avec les résultats.
+- Filtres préremplis depuis le profil : métier, ville, distance, date de début.
+- **Ajout en un clic** à « Mes offres », avec la source ; l'entreprise est retrouvée ou créée.
+- **Doublons repérés** : même identifiant à la source, ou même entreprise, même intitulé et même ville.
+
 ### 📊 Tableau de bord et données
 - Candidatures en cours, envoyées dans la semaine et le mois, entretiens à venir, rappels, réponses et **taux de réponse**, répartition par statut.
 - **Export CSV** des candidatures, prêt pour Excel.
@@ -82,6 +89,7 @@
 | Données | Cloudflare D1 (SQLite) avec Drizzle ORM et ses migrations, Cloudflare R2 pour les PDF |
 | Comptes | Better Auth (lien magique), limitation de débit Cloudflare |
 | E-mails | Brevo (connexion et rappels) |
+| Offres | API La bonne alternance, ROMEO (France Travail), geo.api.gouv.fr |
 | Tâche planifiée | Cron Trigger Cloudflare, chaque matin |
 | Qualité | Vitest dans le runtime Workers, Biome, TypeScript strict, GitHub Actions |
 
@@ -146,7 +154,7 @@ npm run db:migrate:remote   # migrations sur la base D1 en ligne
 npm run deploy              # build Vite puis déploiement du Worker
 ```
 
-Les secrets se posent une fois avec `npx wrangler secret put BETTER_AUTH_SECRET` et `npx wrangler secret put BREVO_API_KEY`.
+Les secrets se posent une fois avec `npx wrangler secret put` : `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `FRANCE_TRAVAIL_CLIENT_ID` et `FRANCE_TRAVAIL_CLIENT_SECRET` (application francetravail.io abonnée à ROMEO v2), et `LBA_API_TOKEN` (clé de production de l'API La bonne alternance). Chaque push sur `main` est déployé par GitHub Actions après les vérifications.
 
 ## Structure du projet
 

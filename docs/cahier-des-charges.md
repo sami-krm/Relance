@@ -139,7 +139,7 @@ Les chiffres sont calculés uniquement à partir des candidatures de l'utilisate
 
 ## V1.5 — Recherche d'offres
 
-- Rechercher des offres via les API officielles de **France Travail** et de **La bonne alternance**.
+- Rechercher des offres via l'API officielle de **La bonne alternance**, qui inclut les offres d'alternance de France Travail. L'API « Offres d'emploi » de France Travail n'est pas proposée aux nouvelles applications ; son API **ROMEO** sert à reconnaître les métiers à partir des mots-clés.
 - Filtrer selon les critères du profil : métier, mots-clés, lieu, distance, type de contrat et date de début.
 - Enregistrer des recherches et leurs filtres.
 - Ajouter une offre trouvée à « Mes offres » en un clic, avec sa source affichée.

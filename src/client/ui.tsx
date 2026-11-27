@@ -76,6 +76,9 @@ export function EspaceConnecte() {
 					<NavLink to="/offres" className={lienNav}>
 						Offres
 					</NavLink>
+					<NavLink to="/recherche" className={lienNav}>
+						Recherche
+					</NavLink>
 					<NavLink to="/parametres" className={lienNav}>
 						Paramètres
 					</NavLink>

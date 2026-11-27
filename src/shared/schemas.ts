@@ -131,7 +131,8 @@ export type Document = {
 // Entreprises, contacts et offres : chaînes vides plutôt que null, pour des formulaires simples.
 const requis = z.string().trim().min(1).max(200);
 const texte = (max = 200) => z.string().trim().max(max).default("");
-const lienWeb = vide.or(z.url({ protocol: /^https?$/ }).max(300)).default("");
+// 2000 caractères : les liens des sources d'offres portent souvent de longs paramètres.
+const lienWeb = vide.or(z.url({ protocol: /^https?$/ }).max(2000)).default("");
 const dateOuVide = vide.or(z.iso.date()).default("");
 
 export const typesContrat = [
@@ -176,6 +177,7 @@ export type Entreprise = z.infer<typeof entrepriseSchema> & { id: string };
 export type Contact = z.infer<typeof contactSchema> & { id: string };
 export type Offre = z.infer<typeof offreSchema> & {
 	id: string;
+	sourceId: string;
 	createdAt: string;
 };
 
@@ -325,6 +327,55 @@ export type OffreTrouvee = {
 	dateDebut: string;
 	description: string;
 };
+
+export const offreTrouveeSchema = z.object({
+	source: z.enum(sourcesOffres),
+	idSource: z.string().min(1).max(200),
+	intitule: requis,
+	entreprise: requis,
+	lieu: texte(),
+	lien: lienWeb,
+	datePublication: dateOuVide,
+	dateDebut: dateOuVide,
+	description: texte(20000),
+});
+
+export const normaliser = (s: string) =>
+	s
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/\p{M}/gu, "")
+		.replace(/[^a-z0-9]+/g, " ")
+		.trim();
+
+// Doublon : même identifiant à la source, ou même entreprise, même intitulé et même ville.
+// Le lieu d'une source est souvent une adresse complète : « paris » se retrouve dans « 41 rue legendre 75017 paris ».
+export function memeOffre(
+	a: {
+		source: string;
+		idSource: string;
+		entreprise: string;
+		intitule: string;
+		lieu: string;
+	},
+	b: {
+		source: string;
+		idSource: string;
+		entreprise: string;
+		intitule: string;
+		lieu: string;
+	},
+) {
+	if (a.idSource && a.source === b.source && a.idSource === b.idSource)
+		return true;
+	if (
+		normaliser(a.entreprise) !== normaliser(b.entreprise) ||
+		normaliser(a.intitule) !== normaliser(b.intitule)
+	)
+		return false;
+	const [la, lb] = [normaliser(a.lieu), normaliser(b.lieu)];
+	return !la || !lb || la.includes(lb) || lb.includes(la);
+}
 
 export type ResultatRecherche = {
 	offres: OffreTrouvee[];

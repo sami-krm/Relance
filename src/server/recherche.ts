@@ -1,10 +1,15 @@
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { entreprise, offre } from "../db/schema";
 import {
+	memeOffre,
+	normaliser,
 	type OffreTrouvee,
+	offreTrouveeSchema,
 	type ResultatRecherche,
 	rechercheSchema,
 } from "../shared/schemas";
-import { type Contexte, exigerSession } from "./session";
+import { bd, type Contexte, exigerSession } from "./session";
 
 const FT_JETON =
 	"https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=%2Fpartenaire";
@@ -106,8 +111,6 @@ async function bonneAlternance(
 	if (!res.ok) throw new Error(`offres ${res.status}`);
 	const texte = await res.text();
 	const { jobs = [] } = lireSansRecruteurs(texte);
-	// Diagnostic temporaire du coût CPU : à retirer une fois mesuré.
-	console.log("lba", { octets: texte.length, jobs: jobs.length });
 	return jobs;
 }
 
@@ -218,6 +221,14 @@ export const routesRecherche = new Hono<Contexte>()
 				offres = offres.filter((o) =>
 					motsDe(o.intitule).some((m) => mots.includes(m)),
 				);
+			// Une même annonce peut arriver deux fois (republiée sous un autre identifiant) : on n'en garde qu'une.
+			const vues = new Set<string>();
+			offres = offres.filter((o) => {
+				const cle = [o.entreprise, o.intitule, o.lieu]
+					.map(normaliser)
+					.join("|");
+				return !vues.has(cle) && vues.add(cle);
+			});
 			return c.json<ResultatRecherche>({
 				offres,
 				metiers: metiers.map(([, libelle]) => libelle),
@@ -239,4 +250,74 @@ export const routesRecherche = new Hono<Contexte>()
 				avertissement,
 			});
 		}
+	})
+	// Ajout en un clic à « Mes offres » : l'entreprise est retrouvée par son nom, ou créée.
+	.post("/offres", async (c) => {
+		const r = offreTrouveeSchema.safeParse(
+			await c.req.json().catch(() => null),
+		);
+		if (!r.success) return c.json({ message: "Offre invalide." }, 400);
+		const o = r.data;
+		const db = bd(c.env);
+		const userId = c.var.userId;
+		const deja = (
+			await db
+				.select({
+					id: offre.id,
+					source: offre.source,
+					idSource: offre.sourceId,
+					intitule: offre.intitule,
+					lieu: offre.lieu,
+					entreprise: entreprise.nom,
+				})
+				.from(offre)
+				.innerJoin(entreprise, eq(offre.entrepriseId, entreprise.id))
+				.where(eq(offre.userId, userId))
+		).find((e) => memeOffre(e, o));
+		if (deja)
+			return c.json(
+				{ message: "Cette offre est déjà dans vos offres.", id: deja.id },
+				409,
+			);
+
+		const existante = (
+			await db
+				.select({ id: entreprise.id, nom: entreprise.nom })
+				.from(entreprise)
+				.where(eq(entreprise.userId, userId))
+		).find((e) => normaliser(e.nom) === normaliser(o.entreprise));
+		const entrepriseId = existante?.id ?? crypto.randomUUID();
+		const id = crypto.randomUUID();
+		const ajout = db.insert(offre).values({
+			id,
+			userId,
+			entrepriseId,
+			intitule: o.intitule,
+			lieu: o.lieu,
+			contrat: "Alternance",
+			source: o.source,
+			sourceId: o.idSource,
+			lien: o.lien,
+			datePublication: o.datePublication,
+			description: o.description,
+		});
+		try {
+			if (existante) await ajout;
+			else
+				await db.batch([
+					db
+						.insert(entreprise)
+						.values({ id: entrepriseId, userId, nom: o.entreprise }),
+					ajout,
+				]);
+		} catch (e) {
+			// Double clic : l'index unique a refusé la seconde insertion.
+			if (`${e} ${(e as Error).cause}`.includes("UNIQUE"))
+				return c.json(
+					{ message: "Cette offre est déjà dans vos offres." },
+					409,
+				);
+			throw e;
+		}
+		return c.json({ id }, 201);
 	});

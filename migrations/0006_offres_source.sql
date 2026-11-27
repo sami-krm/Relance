@@ -1,0 +1,2 @@
+ALTER TABLE `offer` ADD `source_id` text DEFAULT '' NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX `offer_source_idx` ON `offer` (`user_id`,`source`,`source_id`) WHERE "offer"."source_id" <> '';

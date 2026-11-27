@@ -98,7 +98,15 @@ export function Confidentialite() {
 					reçoit votre adresse e-mail et le contenu de l'e-mail. Brevo compte
 					les ouvertures d'e-mails de façon anonyme, sans les rattacher à vous.
 				</li>
-				<li>Aucun autre service, et aucune intelligence artificielle.</li>
+				<li>
+					Quand vous recherchez des offres : ROMEO (France Travail) reçoit les
+					mots-clés saisis pour reconnaître les métiers correspondants, à l'aide
+					d'une intelligence artificielle ; geo.api.gouv.fr (État) reçoit la
+					ville saisie ; La bonne alternance (État) reçoit les codes métier, la
+					position de la ville et la distance. Aucun de ces services ne reçoit
+					votre nom, votre adresse e-mail ou votre CV.
+				</li>
+				<li>Aucun autre service.</li>
 			</ul>
 			<h2>Durée de conservation</h2>
 			<ul>

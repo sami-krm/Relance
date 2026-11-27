@@ -13,6 +13,7 @@ import { Confidentialite, MentionsLegales } from "./legal";
 import { Accueil, Connexion, LienConnexion, PageIntrouvable } from "./pages";
 import { PageProfil } from "./profil";
 import { PageParametres, PageRappels } from "./rappels";
+import { PageRecherche } from "./recherche";
 import { PageEntreprise, PageEntreprises, PageOffres } from "./repertoire";
 import { PageTableau } from "./tableau";
 import { EspaceConnecte } from "./ui";
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
 			{ path: "/entreprises", element: <PageEntreprises /> },
 			{ path: "/entreprises/:id", element: <PageEntreprise /> },
 			{ path: "/offres", element: <PageOffres /> },
+			{ path: "/recherche", element: <PageRecherche /> },
 		],
 	},
 	{ path: "/mentions-legales", element: <MentionsLegales /> },

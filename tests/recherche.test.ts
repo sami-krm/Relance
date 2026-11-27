@@ -157,3 +157,74 @@ it("ignore les entreprises jointes à la réponse sans perdre les offres", () =>
 	const avant = JSON.stringify({ recruiters: [], jobs });
 	expect(lireSansRecruteurs(avant).jobs).toEqual(jobs);
 });
+
+const trouvee = {
+	source: "La bonne alternance",
+	idSource: "lba-1",
+	intitule: "Développeur web (H/F)",
+	entreprise: "Atelier inventé",
+	lieu: "41 rue inventée 69001 Lyon",
+	lien: "https://exemple.test/lba-1",
+	datePublication: "2026-11-21",
+	dateDebut: "2027-09-01",
+	description: "Description",
+};
+
+it("ajoute une offre trouvée en un clic, avec son entreprise, une seule fois", async () => {
+	const cookie = await connecter("recherche-ajout@exemple.test");
+	const ajouter = (o: unknown) =>
+		api(cookie, "/recherche/offres", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(o),
+		});
+	expect((await ajouter(trouvee)).status).toBe(201);
+	const offres = await (await api(cookie, "/offres")).json<
+		{
+			intitule: string;
+			source: string;
+			sourceId: string;
+			contrat: string;
+			entrepriseId: string;
+		}[]
+	>();
+	expect(offres).toMatchObject([
+		{
+			intitule: "Développeur web (H/F)",
+			source: "La bonne alternance",
+			sourceId: "lba-1",
+			contrat: "Alternance",
+		},
+	]);
+	// Même identifiant à la source : refusé.
+	expect((await ajouter(trouvee)).status).toBe(409);
+	// Autre identifiant, mais même entreprise, même intitulé, même ville : refusé aussi.
+	const reprise = {
+		...trouvee,
+		idSource: "lba-2",
+		entreprise: "ATELIER INVENTÉ",
+		lieu: "Lyon",
+	};
+	expect((await ajouter(reprise)).status).toBe(409);
+	// Autre poste dans la même entreprise : l'entreprise existante est reprise.
+	const autre = { ...trouvee, idSource: "lba-3", intitule: "Data analyst" };
+	expect((await ajouter(autre)).status).toBe(201);
+	const entreprises = await (await api(cookie, "/entreprises")).json<
+		unknown[]
+	>();
+	expect(entreprises).toHaveLength(1);
+	expect(
+		(await ajouter({ ...trouvee, lien: "javascript:alert(1)" })).status,
+	).toBe(400);
+});
+
+it("ne montre qu'une fois une annonce publiée deux fois", async () => {
+	const cookie = await connecter("recherche-doublon@exemple.test");
+	simuler({
+		lba: [offreLBA("a", "Développeur web"), offreLBA("b", "Développeur web")],
+	});
+	const r = await (
+		await api(cookie, "/recherche?motsCles=web&ville=Lyon")
+	).json<ResultatRecherche>();
+	expect(r.offres.map((o) => o.idSource)).toEqual(["a"]);
+});

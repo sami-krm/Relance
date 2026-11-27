@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+	index,
+	integer,
+	sqliteTable,
+	text,
+	uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 import type { Profil } from "../shared/schemas";
 
 const now = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
@@ -168,6 +174,8 @@ export const offre = sqliteTable(
 		lieu: texte("lieu"),
 		contrat: texte("contrat"),
 		source: texte("source"),
+		// Identifiant de l'offre chez sa source (recherche d'offres), vide pour une offre saisie à la main.
+		sourceId: texte("source_id"),
 		lien: texte("lien"),
 		datePublication: texte("date_publication"),
 		dateLimite: texte("date_limite"),
@@ -178,6 +186,10 @@ export const offre = sqliteTable(
 	(t) => [
 		index("offer_user_id_idx").on(t.userId),
 		index("offer_company_id_idx").on(t.entrepriseId),
+		// Une offre trouvée par la recherche n'est ajoutée qu'une fois, même après un double clic.
+		uniqueIndex("offer_source_idx")
+			.on(t.userId, t.source, t.sourceId)
+			.where(sql`${t.sourceId} <> ''`),
 	],
 );
 
