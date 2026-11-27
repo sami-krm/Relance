@@ -224,6 +224,7 @@ function ImportCv() {
 				type="file"
 				accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
 				required
+				className={`text-sm ${discret} file:mr-3 file:cursor-pointer file:rounded-lg file:border file:border-zinc-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-50 dark:file:border-zinc-700 dark:file:bg-zinc-900 dark:file:text-zinc-100 dark:hover:file:bg-zinc-800`}
 			/>
 			<button type="submit" className={bouton} disabled={importer.isPending}>
 				{importer.isPending ? "Import…" : "Importer le CV"}
