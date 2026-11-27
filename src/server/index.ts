@@ -15,7 +15,12 @@ import {
 	routesReglages,
 } from "./rappels";
 import { routesRecherche } from "./recherche";
-import { routesContacts, routesEntreprises, routesOffres } from "./repertoire";
+import {
+	routesContacts,
+	routesEntreprises,
+	routesOffres,
+	routesRecherchesEnregistrees,
+} from "./repertoire";
 
 const app = new Hono<{ Bindings: Env }>().basePath("/api");
 
@@ -55,6 +60,7 @@ app.route("/entreprises", routesEntreprises);
 app.route("/contacts", routesContacts);
 app.route("/offres", routesOffres);
 app.route("/recherche", routesRecherche);
+app.route("/recherches", routesRecherchesEnregistrees);
 app.route("/candidatures", routesCandidatures);
 app.route("/rappels", routesRappels);
 app.route("/reglages", routesReglages);

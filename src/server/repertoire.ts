@@ -2,11 +2,12 @@ import { and, asc, desc, eq, type SQL } from "drizzle-orm";
 import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 import { type Context, Hono } from "hono";
 import type { z } from "zod";
-import { contact, entreprise, offre } from "../db/schema";
+import { contact, entreprise, offre, rechercheEnregistree } from "../db/schema";
 import {
 	contactSchema,
 	entrepriseSchema,
 	offreSchema,
+	rechercheEnregistreeSchema,
 } from "../shared/schemas";
 import { bd, type Contexte, exigerSession } from "./session";
 
@@ -106,3 +107,8 @@ export const routesEntreprises = routes(
 );
 export const routesContacts = routes(contact, contactSchema, asc(contact.nom));
 export const routesOffres = routes(offre, offreSchema, desc(offre.createdAt));
+export const routesRecherchesEnregistrees = routes(
+	rechercheEnregistree,
+	rechercheEnregistreeSchema,
+	desc(rechercheEnregistree.createdAt),
+);

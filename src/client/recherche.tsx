@@ -7,6 +7,7 @@ import {
 	type Offre,
 	type OffreTrouvee,
 	type Profil,
+	type RechercheEnregistree,
 	type ResultatRecherche,
 } from "../shared/schemas";
 import { api, json } from "./api";
@@ -75,6 +76,12 @@ function Recherche({ initial }: { initial: Criteres }) {
 		(cle: keyof Criteres) => (e: React.ChangeEvent<HTMLInputElement>) =>
 			setSaisie({ ...saisie, [cle]: e.target.value });
 
+	function relancer(r: RechercheEnregistree) {
+		const c = { ...r, distance: String(r.distance) };
+		setSaisie(c);
+		setCriteres(c);
+	}
+
 	return (
 		<>
 			<h1 className="text-2xl font-bold">Rechercher des offres</h1>
@@ -86,6 +93,7 @@ function Recherche({ initial }: { initial: Criteres }) {
 				. Seules les offres en alternance (apprentissage ou
 				professionnalisation) sont cherchées.
 			</p>
+			<Enregistrees onRelancer={relancer} />
 			<form onSubmit={chercher} className="flex flex-col gap-3">
 				<div className="flex flex-col gap-1">
 					<label htmlFor={`${id}-mots`} className="font-medium">
@@ -158,10 +166,127 @@ function Recherche({ initial }: { initial: Criteres }) {
 				</p>
 			)}
 			{resultat.data && criteres && (
-				<Resultats resultat={resultat.data} debut={criteres.debut} />
+				<>
+					<Enregistrer key={JSON.stringify(criteres)} criteres={criteres} />
+					<Resultats resultat={resultat.data} debut={criteres.debut} />
+				</>
 			)}
 			<Sources />
 		</>
+	);
+}
+
+function Enregistrees({
+	onRelancer,
+}: {
+	onRelancer: (r: RechercheEnregistree) => void;
+}) {
+	const recherches = useRessource<RechercheEnregistree>("/recherches");
+	const [erreur, setErreur] = useState("");
+	const liste = recherches.liste.data ?? [];
+	if (!liste.length) return null;
+	return (
+		<section className="flex flex-col gap-2">
+			<h2 className="text-lg font-semibold">Mes recherches enregistrées</h2>
+			{erreur && (
+				<p role="alert" className={alerte}>
+					{erreur}
+				</p>
+			)}
+			<ul className="flex flex-col gap-2">
+				{liste.map((r) => (
+					<li key={r.id} className="flex flex-wrap items-center gap-2">
+						<button
+							type="button"
+							className={boutonSecondaire}
+							onClick={() => onRelancer(r)}
+						>
+							{r.nom}
+						</button>
+						<span className={`text-sm ${discret}`}>
+							{[r.motsCles, r.ville && `${r.ville}, ${r.distance} km`]
+								.filter(Boolean)
+								.join(" · ")}
+						</span>
+						<button
+							type="button"
+							className="text-sm underline"
+							aria-label={`Supprimer la recherche ${r.nom}`}
+							onClick={() =>
+								recherches
+									.supprimer(r.id)
+									.catch((e) => setErreur((e as Error).message))
+							}
+						>
+							Supprimer
+						</button>
+					</li>
+				))}
+			</ul>
+		</section>
+	);
+}
+
+function Enregistrer({ criteres }: { criteres: Criteres }) {
+	const id = useId();
+	const recherches = useRessource<RechercheEnregistree>("/recherches");
+	const nomParDefaut = [criteres.motsCles, criteres.ville]
+		.filter(Boolean)
+		.join(" · ")
+		.slice(0, 100);
+	const [nom, setNom] = useState(nomParDefaut);
+	const [etat, setEtat] = useState<"" | "enCours" | "fait">("");
+	const [erreur, setErreur] = useState("");
+
+	async function enregistrer(e: FormEvent) {
+		e.preventDefault();
+		setEtat("enCours");
+		setErreur("");
+		try {
+			await recherches.creer({
+				nom,
+				motsCles: criteres.motsCles,
+				ville: criteres.ville,
+				distance: Number(criteres.distance) || 30,
+				debut: criteres.debut,
+			});
+			setEtat("fait");
+		} catch (err) {
+			setErreur((err as Error).message);
+			setEtat("");
+		}
+	}
+
+	if (etat === "fait")
+		return <p className={`text-sm ${discret}`}>Recherche enregistrée.</p>;
+	return (
+		<form onSubmit={enregistrer} className="flex flex-wrap items-end gap-2">
+			<div className="flex flex-col gap-1">
+				<label htmlFor={`${id}-nom`} className="text-sm font-medium">
+					Nom de la recherche
+				</label>
+				<input
+					id={`${id}-nom`}
+					className={champ}
+					value={nom}
+					onChange={(e) => setNom(e.target.value)}
+					required
+					maxLength={100}
+				/>
+			</div>
+			<button
+				type="submit"
+				className={boutonSecondaire}
+				disabled={etat === "enCours"}
+			>
+				Enregistrer cette recherche
+			</button>
+			{erreur && (
+				<p role="alert" className={alerte}>
+					{erreur}
+				</p>
+			)}
+		</form>
 	);
 }
 

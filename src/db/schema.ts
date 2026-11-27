@@ -281,3 +281,19 @@ export const preference = sqliteTable("preference", {
 		.default(true),
 	...horodatage(),
 });
+
+// Recherches d'offres enregistrées avec leurs filtres (V1.5).
+export const rechercheEnregistree = sqliteTable(
+	"saved_search",
+	{
+		id: text("id").primaryKey(),
+		userId: proprietaire(),
+		nom: text("nom").notNull(),
+		motsCles: texte("mots_cles"),
+		ville: texte("ville"),
+		distance: integer("distance").notNull().default(30),
+		debut: texte("debut"),
+		...horodatage(),
+	},
+	(t) => [index("saved_search_user_id_idx").on(t.userId)],
+);

@@ -316,6 +316,17 @@ export const rechercheSchema = z.object({
 	distance: z.coerce.number().int().min(0).max(200).default(30),
 });
 
+export const rechercheEnregistreeSchema = z.object({
+	nom: z.string().trim().min(1).max(100),
+	motsCles: z.string().trim().max(200).default(""),
+	ville: z.string().trim().max(100).default(""),
+	distance: z.number().int().min(0).max(200).default(30),
+	debut: dateOuVide,
+});
+export type RechercheEnregistree = z.infer<
+	typeof rechercheEnregistreeSchema
+> & { id: string };
+
 export type OffreTrouvee = {
 	source: SourceOffres;
 	idSource: string;

@@ -243,3 +243,36 @@ it("cherche dans toute la France quand la ville n'est pas reconnue", async () =>
 	expect(lba.searchParams.has("latitude")).toBe(false);
 	expect(lba.searchParams.get("romes")).toBe("M1805,E1205");
 });
+
+it("enregistre, liste et supprime des recherches, propres à chaque compte", async () => {
+	const cookie = await connecter("recherches-1@exemple.test");
+	const autre = await connecter("recherches-2@exemple.test");
+	const envoyer = (c: string, corps: unknown) =>
+		api(c, "/recherches", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(corps),
+		});
+	const res = await envoyer(cookie, {
+		nom: "Web à Lyon",
+		motsCles: "développeur web",
+		ville: "Lyon",
+		distance: 20,
+		debut: "2027-09-01",
+	});
+	expect(res.status).toBe(201);
+	const { id } = await res.json<{ id: string }>();
+	expect(await (await api(cookie, "/recherches")).json()).toMatchObject([
+		{ id, nom: "Web à Lyon", motsCles: "développeur web", distance: 20 },
+	]);
+	expect(await (await api(autre, "/recherches")).json()).toEqual([]);
+	expect(
+		(await api(autre, `/recherches/${id}`, { method: "DELETE" })).status,
+	).toBe(404);
+	expect((await envoyer(cookie, { nom: "" })).status).toBe(400);
+	expect((await envoyer(cookie, { nom: "x", distance: 999 })).status).toBe(400);
+	expect(
+		(await api(cookie, `/recherches/${id}`, { method: "DELETE" })).status,
+	).toBe(204);
+	expect(await (await api(cookie, "/recherches")).json()).toEqual([]);
+});
