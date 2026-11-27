@@ -5,10 +5,12 @@ import {
 	type Entreprise,
 	memeOffre,
 	type Offre,
+	type OffreLue,
 	type OffreTrouvee,
 	type Profil,
 	type RechercheEnregistree,
 	type ResultatRecherche,
+	SOURCE_LIEN,
 } from "../shared/schemas";
 import { api, json } from "./api";
 import { useRessource } from "./repertoire";
@@ -171,6 +173,7 @@ function Recherche({ initial }: { initial: Criteres }) {
 					<Resultats resultat={resultat.data} debut={criteres.debut} />
 				</>
 			)}
+			<AjoutParLien />
 			<Sources />
 		</>
 	);
@@ -425,6 +428,166 @@ function CarteOffre({
 	);
 }
 
+const offreVide: OffreLue = {
+	intitule: "",
+	entreprise: "",
+	lieu: "",
+	datePublication: "",
+	dateLimite: "",
+	description: "",
+};
+const champsLien: {
+	cle: keyof OffreLue;
+	libelle: string;
+	type?: "date" | "long";
+	requis?: boolean;
+}[] = [
+	{ cle: "intitule", libelle: "Intitulé du poste", requis: true },
+	{ cle: "entreprise", libelle: "Entreprise", requis: true },
+	{ cle: "lieu", libelle: "Lieu" },
+	{ cle: "datePublication", libelle: "Date de publication", type: "date" },
+	{ cle: "dateLimite", libelle: "Date limite de candidature", type: "date" },
+	{ cle: "description", libelle: "Description", type: "long" },
+];
+
+// Ajout d'une offre depuis son lien : la page préremplit ce qu'elle peut, l'utilisateur vérifie et complète.
+function AjoutParLien() {
+	const id = useId();
+	const qc = useQueryClient();
+	const [url, setUrl] = useState("");
+	const [lue, setLue] = useState<{ url: string; message?: string }>();
+	const [champs, setChamps] = useState<OffreLue>(offreVide);
+	const [enCours, setEnCours] = useState(false);
+	const [erreur, setErreur] = useState("");
+	const [ajoutee, setAjoutee] = useState(false);
+
+	async function lire(e: FormEvent) {
+		e.preventDefault();
+		setEnCours(true);
+		setErreur("");
+		setAjoutee(false);
+		try {
+			const r = await api<{ offre: OffreLue | null; message?: string }>(
+				"/recherche/lien",
+				json("POST", { url }),
+			);
+			setChamps({ ...offreVide, ...r.offre });
+			setLue({ url, message: r.message });
+		} catch (err) {
+			setErreur((err as Error).message);
+		} finally {
+			setEnCours(false);
+		}
+	}
+
+	async function ajouter(e: FormEvent) {
+		e.preventDefault();
+		if (!lue) return;
+		setEnCours(true);
+		setErreur("");
+		try {
+			await api(
+				"/recherche/offres",
+				json("POST", {
+					...champs,
+					source: SOURCE_LIEN,
+					idSource: lue.url,
+					lien: lue.url,
+				}),
+			);
+			setAjoutee(true);
+			setLue(undefined);
+			setUrl("");
+			await qc.invalidateQueries({ queryKey: ["/offres"] });
+			await qc.invalidateQueries({ queryKey: ["/entreprises"] });
+		} catch (err) {
+			setErreur((err as Error).message);
+		} finally {
+			setEnCours(false);
+		}
+	}
+
+	return (
+		<details
+			id="ajout-lien"
+			className="rounded-md border border-dashed border-zinc-400 p-4"
+		>
+			<summary className="cursor-pointer font-semibold">
+				Ajouter une offre depuis son lien
+			</summary>
+			<form onSubmit={lire} className="mt-4 flex flex-wrap items-end gap-2">
+				<div className="flex grow flex-col gap-1">
+					<label htmlFor={`${id}-url`} className="font-medium">
+						Lien de l'offre
+					</label>
+					<input
+						id={`${id}-url`}
+						type="url"
+						required
+						maxLength={2000}
+						className={champ}
+						value={url}
+						onChange={(e) => setUrl(e.target.value)}
+						placeholder="https://…"
+					/>
+				</div>
+				<button type="submit" className={boutonSecondaire} disabled={enCours}>
+					{enCours && !lue ? "Lecture…" : "Lire la page"}
+				</button>
+			</form>
+			{erreur && (
+				<p role="alert" className={`mt-3 ${alerte}`}>
+					{erreur}
+				</p>
+			)}
+			{ajoutee && (
+				<p className="mt-3 text-sm">
+					Offre ajoutée à{" "}
+					<Link to="/offres" className="underline">
+						vos offres
+					</Link>
+					.
+				</p>
+			)}
+			{lue && (
+				<form onSubmit={ajouter} className="mt-4 flex flex-col gap-3">
+					<p className={`text-sm ${lue.message ? alerte : discret}`}>
+						{lue.message ??
+							"Champs préremplis depuis la page : vérifiez-les avant d'ajouter l'offre."}
+					</p>
+					{champsLien.map((c) => {
+						const commun = {
+							id: `${id}-${c.cle}`,
+							className: champ,
+							required: c.requis,
+							value: champs[c.cle],
+							onChange: (
+								e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+							) => setChamps({ ...champs, [c.cle]: e.target.value }),
+						};
+						return (
+							<div key={c.cle} className="flex flex-col gap-1">
+								<label htmlFor={commun.id} className="font-medium">
+									{c.libelle}
+									{c.requis && " (obligatoire)"}
+								</label>
+								{c.type === "long" ? (
+									<textarea rows={5} maxLength={20000} {...commun} />
+								) : (
+									<input type={c.type ?? "text"} maxLength={200} {...commun} />
+								)}
+							</div>
+						);
+					})}
+					<button type="submit" className={bouton} disabled={enCours}>
+						Ajouter à mes offres
+					</button>
+				</form>
+			)}
+		</details>
+	);
+}
+
 // Les sources réellement utilisées, sans en promettre d'autres.
 function Sources() {
 	return (
@@ -445,6 +608,12 @@ function Sources() {
 				<li>
 					<strong>Découpage administratif</strong> (geo.api.gouv.fr) : situe la
 					ville saisie.
+				</li>
+				<li>
+					<strong>Ajout par lien</strong> : Relance lit la page de l'offre et
+					reprend les informations que le site publie pour les moteurs de
+					recherche. Certains sites (LinkedIn, Indeed…) bloquent cette lecture :
+					les champs sont alors à remplir à la main.
 				</li>
 			</ul>
 			<p className={`mt-3 text-sm ${discret}`}>

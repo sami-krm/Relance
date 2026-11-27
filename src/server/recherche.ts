@@ -2,13 +2,16 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { entreprise, offre } from "../db/schema";
 import {
+	lienSchema,
 	memeOffre,
 	normaliser,
 	type OffreTrouvee,
 	offreTrouveeSchema,
 	type ResultatRecherche,
 	rechercheSchema,
+	SOURCE_LIEN,
 } from "../shared/schemas";
+import { lireOffre } from "./lien";
 import { bd, type Contexte, exigerSession } from "./session";
 
 const FT_JETON =
@@ -299,11 +302,13 @@ export const routesRecherche = new Hono<Contexte>()
 			entrepriseId,
 			intitule: o.intitule,
 			lieu: o.lieu,
-			contrat: "Alternance",
+			// Les sources de la recherche ne donnent que de l'alternance ; un lien quelconque, on ne sait pas.
+			contrat: o.source === SOURCE_LIEN ? "" : "Alternance",
 			source: o.source,
 			sourceId: o.idSource,
 			lien: o.lien,
 			datePublication: o.datePublication,
+			dateLimite: o.dateLimite,
 			description: o.description,
 		});
 		try {
@@ -325,4 +330,19 @@ export const routesRecherche = new Hono<Contexte>()
 			throw e;
 		}
 		return c.json({ id }, 201);
+	})
+	// Lit une page d'offre pour préremplir le formulaire ; rien n'est enregistré ici.
+	.post("/lien", async (c) => {
+		const r = lienSchema.safeParse(await c.req.json().catch(() => null));
+		if (!r.success) return c.json({ message: "Lien invalide." }, 400);
+		const offre = await lireOffre(r.data.url).catch((e) => {
+			console.error("lecture du lien", e);
+			return null;
+		});
+		return c.json({
+			offre,
+			message: offre?.intitule
+				? undefined
+				: "Cette page ne fournit pas d'informations lisibles : complétez les champs à la main.",
+		});
 	});

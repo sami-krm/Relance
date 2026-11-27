@@ -339,17 +339,35 @@ export type OffreTrouvee = {
 	description: string;
 };
 
+// Offre ajoutée depuis son lien : l'adresse de la page sert d'identifiant, pour repérer les doublons.
+export const SOURCE_LIEN = "Lien de l'offre";
+
 export const offreTrouveeSchema = z.object({
-	source: z.enum(sourcesOffres),
-	idSource: z.string().min(1).max(200),
+	source: z.enum([...sourcesOffres, SOURCE_LIEN]),
+	idSource: z.string().min(1).max(2000),
 	intitule: requis,
 	entreprise: requis,
 	lieu: texte(),
 	lien: lienWeb,
 	datePublication: dateOuVide,
 	dateDebut: dateOuVide,
+	dateLimite: dateOuVide,
 	description: texte(20000),
 });
+
+export const lienSchema = z.object({
+	url: z.url({ protocol: /^https?$/ }).max(2000),
+});
+
+// Champs lus sur la page d'une offre ; vides quand la page ne les donne pas.
+export type OffreLue = {
+	intitule: string;
+	entreprise: string;
+	lieu: string;
+	datePublication: string;
+	dateLimite: string;
+	description: string;
+};
 
 export const normaliser = (s: string) =>
 	s

@@ -607,6 +607,13 @@ export function PageOffres() {
 	return (
 		<>
 			<h1 className="text-2xl font-bold">Offres</h1>
+			<p className={discret}>
+				Vous avez le lien d'une offre ? Ajoutez-la depuis la page{" "}
+				<Link to="/recherche" className="underline">
+					Recherche
+				</Link>
+				, qui lit la page pour préremplir les champs.
+			</p>
 			<Ajout titre="Ajouter une offre">
 				{entreprises.length === 0 ? (
 					<p>
