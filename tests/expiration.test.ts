@@ -54,6 +54,14 @@ it("signale les offres pourvues, annulées, retirées ou expirées, et seulement
 	const expiree = Object.fromEntries(
 		offres.map((o) => [o.intitule, o.expiree]),
 	);
+	// Toutes les offres vérifiées passent en fin de file, même celle restée sans réponse.
+	expect(
+		new Set(
+			offres
+				.filter((o) => o.intitule !== "franceTravail")
+				.map((o) => (o as Offre & { verifieeLe: string }).verifieeLe),
+		),
+	).toEqual(new Set(["2026-11-27"]));
 	expect(expiree).toEqual({
 		active: false,
 		pourvue: true,

@@ -969,11 +969,14 @@ export function PageCandidature() {
 				<a
 					key="cv"
 					href={`/api/documents/${c.cvId}/fichier`}
-					target="_blank"
-					rel="noreferrer"
+					// Un DOCX se télécharge : pas d'onglet vide.
+					{...(cv?.format === "docx"
+						? { download: "" }
+						: { target: "_blank", rel: "noreferrer" })}
 					className="underline"
 				>
-					{cv?.nom ?? "CV masqué de vos documents"} (aperçu)
+					{cv?.nom ?? "CV masqué de vos documents"} (
+					{cv?.format === "docx" ? "télécharger" : "aperçu"})
 				</a>
 			),
 		],

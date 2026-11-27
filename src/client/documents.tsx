@@ -99,8 +99,10 @@ export function PageDocuments() {
 								<span className="ml-auto flex flex-wrap gap-2">
 									<a
 										href={`/api/documents/${cv.id}/fichier`}
-										target="_blank"
-										rel="noreferrer"
+										// Un DOCX se télécharge : pas d'onglet vide.
+										{...(cv.format === "docx"
+											? { download: "" }
+											: { target: "_blank", rel: "noreferrer" })}
 										className={boutonSecondaire}
 									>
 										{cv.format === "docx" ? "Télécharger" : "Aperçu"}

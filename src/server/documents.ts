@@ -20,18 +20,11 @@ export function formatCv(octets: ArrayBuffer): "pdf" | "docx" | null {
 	if (new TextDecoder().decode(debut) === "%PDF-") return "pdf";
 	const zip = [0x50, 0x4b, 0x03, 0x04].every((o, i) => debut[i] === o);
 	if (!zip) return null;
+	// Les octets binaires deviennent des caractères de remplacement, mais un nom ASCII reste intact.
 	const fin = new Uint8Array(octets, Math.max(0, octets.byteLength - 65_536));
-	return contientOctets(fin, motif) ? "docx" : null;
-}
-const motif = new TextEncoder().encode("word/document.xml");
-function contientOctets(tas: Uint8Array, aiguille: Uint8Array) {
-	for (
-		let i = tas.indexOf(aiguille[0]);
-		i !== -1;
-		i = tas.indexOf(aiguille[0], i + 1)
-	)
-		if (aiguille.every((o, j) => tas[i + j] === o)) return true;
-	return false;
+	return new TextDecoder().decode(fin).includes("word/document.xml")
+		? "docx"
+		: null;
 }
 const typeMime = { pdf: "application/pdf", docx: DOCX } as const;
 const formatDe = (cleR2: string | null) =>

@@ -134,7 +134,9 @@ const depuisLBA = (o: OffreLBA): OffreTrouvee => ({
 	source: "La bonne alternance",
 	idSource: o.identifier.id ?? o.identifier.partner_job_id,
 	intitule: o.offer.title,
-	entreprise: o.workplace.name ?? o.workplace.legal_name ?? "",
+	// Certains employeurs restent anonymes ; un nom vide empêcherait d'ajouter l'offre.
+	entreprise:
+		o.workplace.name || o.workplace.legal_name || "Entreprise non communiquée",
 	lieu: o.workplace.location.address,
 	lien: o.apply.url,
 	datePublication: o.offer.publication.creation?.slice(0, 10) ?? "",

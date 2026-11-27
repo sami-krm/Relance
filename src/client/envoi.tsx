@@ -138,17 +138,27 @@ export function PreparerEnvoi({ c }: { c: Candidature }) {
 
 	function confirmer() {
 		if (!apercu) return;
-		// Ouvert tout de suite, dans le geste de l'utilisateur, sinon le navigateur bloque la fenêtre.
-		if (apercu.mode === "email") {
-			const corps = [apercu.lettre, apercu.reponses]
-				.filter(Boolean)
-				.join("\n\n");
-			window.location.href = `mailto:${encodeURIComponent(apercu.destinataire)}?subject=${encodeURIComponent(
-				`Candidature : ${apercu.poste}`,
-			)}&body=${encodeURIComponent(corps)}`;
-		} else window.open(apercu.lien, "_blank", "noopener");
+		const a = apercu;
+		// L'onglet s'ouvre dans le geste de l'utilisateur (sinon le navigateur le bloque),
+		// mais ne reçoit l'adresse du site qu'une fois l'envoi enregistré.
+		const onglet = a.mode === "site" ? window.open("", "_blank") : null;
 		agir(async () => {
-			await api(`/candidatures/${c.id}/envoi`, json("POST", { mode }));
+			try {
+				await api(`/candidatures/${c.id}/envoi`, json("POST", { mode }));
+			} catch (e) {
+				onglet?.close();
+				throw e;
+			}
+			if (a.mode === "email")
+				window.location.href = `mailto:${encodeURIComponent(a.destinataire)}?subject=${encodeURIComponent(
+					`Candidature : ${a.poste}`,
+				)}&body=${encodeURIComponent(
+					[a.lettre, a.reponses].filter(Boolean).join("\n\n"),
+				)}`;
+			else if (onglet) {
+				onglet.opener = null;
+				onglet.location.href = a.lien;
+			} else window.open(a.lien, "_blank", "noopener");
 			setApercu(undefined);
 			await qc.invalidateQueries();
 		});

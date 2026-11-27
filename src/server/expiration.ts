@@ -59,15 +59,19 @@ export async function verifierExpirations(env: Env, aujourdhui: string) {
 			etatOffre(env, o.sourceId, aujourdhui).catch((): Etat => "inconnu"),
 		),
 	);
-	const ids = (etat: Etat) =>
-		aVerifier.filter((_, i) => etats[i] === etat).map((o) => o.id);
-	const verifiees = [...ids("active"), ...ids("expiree")];
-	if (verifiees.length)
-		await db
-			.update(offre)
-			.set({ verifieeLe: aujourdhui })
-			.where(inArray(offre.id, verifiees));
-	const expirees = ids("expiree");
+	// Même sans réponse, l'offre passe en fin de file : sinon des offres en erreur bloqueraient les autres chaque matin.
+	await db
+		.update(offre)
+		.set({ verifieeLe: aujourdhui })
+		.where(
+			inArray(
+				offre.id,
+				aVerifier.map((o) => o.id),
+			),
+		);
+	const expirees = aVerifier
+		.filter((_, i) => etats[i] === "expiree")
+		.map((o) => o.id);
 	if (expirees.length)
 		await db
 			.update(offre)

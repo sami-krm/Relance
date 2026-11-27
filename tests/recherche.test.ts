@@ -276,3 +276,21 @@ it("enregistre, liste et supprime des recherches, propres à chaque compte", asy
 	).toBe(204);
 	expect(await (await api(cookie, "/recherches")).json()).toEqual([]);
 });
+
+it("ajoute une offre dont l'employeur reste anonyme", async () => {
+	const cookie = await connecter("recherche-anonyme@exemple.test");
+	const anonyme = offreLBA("anon", "Développeur web");
+	anonyme.workplace.name = null as unknown as string;
+	simuler({ lba: [anonyme] });
+	const r = await (
+		await api(cookie, "/recherche?motsCles=web&ville=Lyon")
+	).json<ResultatRecherche>();
+	expect(r.offres[0].entreprise).toBe("Entreprise non communiquée");
+	vi.restoreAllMocks();
+	const res = await api(cookie, "/recherche/offres", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify(r.offres[0]),
+	});
+	expect(res.status).toBe(201);
+});
