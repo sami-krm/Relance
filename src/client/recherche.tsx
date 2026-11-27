@@ -13,6 +13,7 @@ import {
 	SOURCE_LIEN,
 } from "../shared/schemas";
 import { api, json } from "./api";
+import { EstimationCorrespondance } from "./correspondance";
 import { useRessource } from "./repertoire";
 import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
 
@@ -395,6 +396,7 @@ function CarteOffre({
 					Voir l'offre sur le site d'origine
 				</a>
 			)}
+			<EstimationCorrespondance offre={{ ...o, contrat: "Alternance" }} />
 			{o.description && (
 				<details>
 					<summary className="cursor-pointer text-sm">Description</summary>

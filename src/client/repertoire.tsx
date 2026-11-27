@@ -9,6 +9,7 @@ import {
 } from "../shared/schemas";
 import { api, json } from "./api";
 import { CandidaturesEntreprise } from "./candidatures";
+import { EstimationCorrespondance } from "./correspondance";
 import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
 
 type Valeurs = Record<string, string>;
@@ -546,6 +547,7 @@ function ListeOffres({
 									Voir l'offre
 								</a>
 							)}
+							<EstimationCorrespondance offre={o} />
 							{o.description && (
 								<details>
 									<summary className="cursor-pointer text-sm">

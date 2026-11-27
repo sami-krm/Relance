@@ -89,6 +89,10 @@
 - Relance n'envoie rien elle-même : **e-mail préparé** dans votre messagerie (CV à joindre) ou **site de l'offre** ouvert pour y postuler.
 - À la confirmation, la candidature passe à « Envoyée » et **ce qui a été transmis est conservé**.
 
+### 🎯 Correspondance profil-offre (V2)
+- Sur chaque offre, une **estimation expliquée** : métier et mots-clés, compétences, formation, lieu et mode de travail, contrat et dates.
+- Chaque critère dit ce qui augmente ou diminue la correspondance. C'est une aide au tri, jamais une garantie ; aucun calcul par IA.
+
 ### 📊 Tableau de bord et données
 - Candidatures en cours, envoyées dans la semaine et le mois, entretiens à venir, rappels, réponses et **taux de réponse**, répartition par statut.
 - **Export CSV** des candidatures, prêt pour Excel.
