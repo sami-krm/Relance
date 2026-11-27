@@ -2,7 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { type Document, TAILLE_MAX_CV } from "../shared/schemas";
 import { api, json } from "./api";
-import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
+import {
+	alerte,
+	bouton,
+	boutonSecondaire,
+	Chargement,
+	champ,
+	discret,
+	EnTete,
+	EtatVide,
+} from "./ui";
 
 const libelles = {
 	cv: "CV",
@@ -45,7 +54,7 @@ export function PageDocuments() {
 				Impossible de charger les documents.
 			</p>
 		);
-	if (!docs.data) return <p>Chargement…</p>;
+	if (!docs.data) return <Chargement />;
 	const cvs = docs.data.filter((d) => d.type === "cv");
 	const textes = docs.data.filter((d) => d.type !== "cv");
 
@@ -60,7 +69,10 @@ export function PageDocuments() {
 
 	return (
 		<>
-			<h1 className="text-2xl font-bold">Mes documents</h1>
+			<EnTete
+				titre="Documents"
+				description="Vos CV, conservés tels quels, et vos lettres et réponses types, réutilisables dans vos candidatures."
+			/>
 			{erreur && (
 				<p role="alert" className={alerte}>
 					{erreur.message}
@@ -77,13 +89,15 @@ export function PageDocuments() {
 				</p>
 				<ImportCv />
 				{cvs.length === 0 ? (
-					<p className={discret}>Aucun CV pour l'instant.</p>
+					<EtatVide titre="Aucun CV pour l'instant">
+						Importez votre CV ci-dessus : il sera proposé dans vos candidatures.
+					</EtatVide>
 				) : (
 					<ul className="flex flex-col gap-2">
 						{cvs.map((cv) => (
 							<li
 								key={cv.id}
-								className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-zinc-300 p-3 dark:border-zinc-700"
+								className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
 							>
 								<span className="font-medium">{cv.nom}</span>
 								<span className={`text-sm ${discret}`}>
@@ -187,7 +201,7 @@ function ImportCv() {
 	return (
 		<form
 			onSubmit={envoyer}
-			className="flex flex-col gap-3 rounded-md border border-dashed border-zinc-400 p-4"
+			className="flex flex-col gap-3 rounded-xl border border-dashed border-zinc-300 bg-white/60 p-4 dark:border-zinc-700 dark:bg-zinc-900/40"
 		>
 			<label htmlFor="nom-cv" className="font-medium">
 				Nom du CV
@@ -260,7 +274,7 @@ function Textes({
 					e.preventDefault();
 					enregistrer.mutate(brouillon);
 				}}
-				className="flex flex-col gap-3 rounded-md border border-dashed border-zinc-400 p-4"
+				className="flex flex-col gap-3 rounded-xl border border-dashed border-zinc-300 bg-white/60 p-4 dark:border-zinc-700 dark:bg-zinc-900/40"
 			>
 				<h3 className="font-semibold">
 					{brouillon.id ? `Modifier « ${brouillon.nom} »` : "Nouveau texte"}
@@ -331,13 +345,16 @@ function Textes({
 			</form>
 
 			{textes.length === 0 ? (
-				<p className={discret}>Aucune lettre ni réponse type pour l'instant.</p>
+				<EtatVide titre="Aucune lettre ni réponse type">
+					Écrivez-en une ici, ou enregistrez un brouillon rédigé avec l'IA
+					depuis une candidature.
+				</EtatVide>
 			) : (
 				<ul className="flex flex-col gap-2">
 					{textes.map((t) => (
 						<li
 							key={t.id}
-							className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-zinc-300 p-3 dark:border-zinc-700"
+							className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
 						>
 							<span className="font-medium">{t.nom}</span>
 							<span className={`text-sm ${discret}`}>

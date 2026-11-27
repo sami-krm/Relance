@@ -22,7 +22,7 @@ export function MesDonnees() {
 
 	return (
 		<>
-			<section className="flex flex-col gap-3 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+			<section className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
 				<h2 className="font-semibold">Mes données</h2>
 				<p className={discret}>
 					Le fichier CSV s'ouvre dans Excel, LibreOffice ou Google Sheets.

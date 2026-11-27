@@ -31,13 +31,38 @@ import { PreparerEnvoi } from "./envoi";
 import { BrouillonsIa } from "./ia";
 import { RappelsCandidature } from "./rappels";
 import { useRessource } from "./repertoire";
-import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
+import {
+	alerte,
+	BadgeStatut,
+	bouton,
+	boutonSecondaire,
+	Chargement,
+	carte,
+	champ,
+	dateFr,
+	discret,
+	EnTete,
+	EtatVide,
+	lien,
+	pastilleStatut,
+} from "./ui";
 
-const carte =
-	"flex flex-col gap-2 rounded-md border border-zinc-300 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900";
-const dateFr = (iso: string) =>
-	iso ? new Date(`${iso}T00:00`).toLocaleDateString("fr-FR") : "";
 const aujourdhui = () => new Date().toLocaleDateString("sv-SE");
+
+// Ce que l'utilisateur a de plus utile à faire selon le statut.
+const prochaineEtape: Record<Statut, string> = {
+	brouillon:
+		"choisissez le CV et la lettre, puis préparez l'envoi avec l'aperçu.",
+	envoyee:
+		"une relance est proposée une semaine après l'envoi ; notez ici la réponse quand elle arrive.",
+	reponse: "répondez au recruteur et notez la suite (entretien, refus…).",
+	entretien:
+		"préparez l'entretien et ajoutez un rappel à sa date si ce n'est pas fait.",
+	offre: "prenez le temps de comparer avant de répondre à l'offre.",
+	refusee:
+		"candidature close. Vous pouvez la garder pour l'historique ou la supprimer.",
+	abandonnee: "candidature close. Changez son statut si vous la reprenez.",
+};
 
 function useDonnees() {
 	const candidatures = useRessource<Candidature>("/candidatures");
@@ -83,7 +108,7 @@ function Etiquettes({ liste }: { liste: string[] }) {
 			{liste.map((e) => (
 				<span
 					key={e}
-					className="rounded bg-zinc-200 px-2 text-xs dark:bg-zinc-700"
+					className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
 				>
 					{e}
 				</span>
@@ -98,27 +123,38 @@ export function PageCandidatures() {
 	const [erreur, setErreur] = useState("");
 	const vue = params.get("vue") === "liste" ? "liste" : "tableau";
 	if (candidatures.liste.isError)
-		return <p className={alerte}>Impossible de charger les candidatures.</p>;
-	if (!candidatures.liste.data || !entreprises) return <p>Chargement…</p>;
+		return (
+			<p role="alert" className={alerte}>
+				Impossible de charger les candidatures. Rechargez la page.
+			</p>
+		);
+	if (!candidatures.liste.data || !entreprises) return <Chargement />;
 	const changer = (id: string, statut: Statut) =>
 		candidatures.modifier(id, { statut }).catch((e) => setErreur(e.message));
 
 	return (
 		<>
-			<div className="flex flex-wrap items-center gap-3">
-				<h1 className="mr-auto text-2xl font-bold">Candidatures</h1>
-				<Link to="/candidatures/nouvelle" className={bouton}>
-					Nouvelle candidature
-				</Link>
-			</div>
-			<fieldset className="flex gap-2">
+			<EnTete
+				titre="Candidatures"
+				description="Faites glisser une carte, ou changez son statut, pour suivre chaque candidature jusqu'à la réponse."
+				actions={
+					<Link to="/candidatures/nouvelle" className={`${bouton} lg:hidden`}>
+						Nouvelle candidature
+					</Link>
+				}
+			/>
+			<fieldset className="flex self-start rounded-lg border border-zinc-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-900">
 				<legend className="sr-only">Affichage</legend>
 				{(["tableau", "liste"] as const).map((v) => (
 					<button
 						key={v}
 						type="button"
 						aria-pressed={vue === v}
-						className={`${boutonSecondaire} ${vue === v ? "font-semibold underline" : ""}`}
+						className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+							vue === v
+								? "bg-teal-700 text-white dark:bg-teal-400 dark:text-teal-950"
+								: "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+						}`}
 						onClick={() => setParams(v === "liste" ? { vue: "liste" } : {})}
 					>
 						{v === "tableau" ? "Tableau" : "Liste"}
@@ -131,10 +167,22 @@ export function PageCandidatures() {
 				</p>
 			)}
 			{candidatures.liste.data.length === 0 ? (
-				<p className={discret}>
-					Aucune candidature pour l'instant. Créez-en une depuis une offre ou en
-					candidature spontanée.
-				</p>
+				<EtatVide
+					titre="Aucune candidature pour l'instant"
+					action={
+						<span className="flex flex-wrap gap-2">
+							<Link to="/candidatures/nouvelle" className={bouton}>
+								Créer une candidature
+							</Link>
+							<Link to="/recherche" className={boutonSecondaire}>
+								Rechercher des offres
+							</Link>
+						</span>
+					}
+				>
+					Créez-en une depuis une offre enregistrée ou en candidature spontanée.
+					Elle apparaîtra ici, rangée par statut.
+				</EtatVide>
 			) : vue === "tableau" ? (
 				<Kanban
 					candidatures={candidatures.liste.data}
@@ -266,11 +314,15 @@ function Colonne({
 		<section
 			ref={setNodeRef}
 			aria-label={`${libellesStatut[statut]} (${cartes.length})`}
-			className={`flex w-64 shrink-0 flex-col gap-2 rounded-md bg-zinc-100 p-2 dark:bg-zinc-800 ${isOver ? "ring-2 ring-zinc-500" : ""}`}
+			className={`flex w-72 shrink-0 flex-col gap-2 rounded-xl bg-zinc-100/80 p-2 dark:bg-zinc-900/60 ${isOver ? "ring-2 ring-teal-500" : ""}`}
 		>
-			<h2 className="px-1 font-semibold">
-				{libellesStatut[statut]}{" "}
-				<span className={`text-sm font-normal ${discret}`}>
+			<h2 className="flex items-center gap-2 px-2 pt-1 text-sm font-semibold">
+				<span
+					aria-hidden="true"
+					className={`size-2 rounded-full ${pastilleStatut[statut]}`}
+				/>
+				{libellesStatut[statut]}
+				<span className={`ml-auto text-xs font-normal tabular-nums ${discret}`}>
 					{cartes.length}
 				</span>
 			</h2>
@@ -303,7 +355,7 @@ function Carte({
 	return (
 		<li
 			ref={setNodeRef}
-			className={`${carte} ${isDragging ? "opacity-40" : ""}`}
+			className={`${carte} p-3 ${isDragging ? "opacity-40" : ""}`}
 		>
 			<div className="flex items-start gap-2">
 				<button
@@ -311,12 +363,15 @@ function Carte({
 					{...listeners}
 					{...attributes}
 					aria-label={`Déplacer « ${c.poste} »`}
-					className="cursor-grab touch-none rounded px-1 text-lg leading-none hover:bg-zinc-200 dark:hover:bg-zinc-700"
+					className={`cursor-grab touch-none rounded px-1 text-lg leading-none hover:bg-zinc-100 dark:hover:bg-zinc-800 ${discret}`}
 				>
 					⠿
 				</button>
 				<span className="flex flex-col">
-					<Link to={`/candidatures/${c.id}`} className="font-medium underline">
+					<Link
+						to={`/candidatures/${c.id}`}
+						className="font-medium hover:text-teal-700 hover:underline dark:hover:text-teal-300"
+					>
 						{c.poste}
 					</Link>
 					<span className={`text-sm ${discret}`}>
@@ -342,8 +397,10 @@ function Liste({
 	entreprises: Entreprise[];
 	nomEntreprise: (id: string) => string;
 }) {
+	const [params] = useSearchParams();
 	const [filtre, setFiltre] = useState({
-		statut: "",
+		// Le tableau de bord renvoie ici avec un statut déjà choisi.
+		statut: params.get("statut") ?? "",
 		entreprise: "",
 		du: "",
 		au: "",
@@ -436,14 +493,14 @@ function Liste({
 			<p className={`text-sm ${discret}`} aria-live="polite">
 				{lignes.length} candidature{lignes.length > 1 ? "s" : ""}
 			</p>
-			<div className="overflow-x-auto">
+			<div className={`${carte} overflow-x-auto p-0`}>
 				<table className="w-full text-left text-sm">
-					<thead>
-						<tr className="border-b border-zinc-300 dark:border-zinc-700">
+					<thead className="bg-zinc-50 dark:bg-zinc-900">
+						<tr className="border-b border-zinc-200 dark:border-zinc-800">
 							{colonnes.map(([cle, libelle]) => (
 								<th
 									key={cle}
-									className="py-2 pr-3"
+									className="px-4 py-2.5"
 									aria-sort={
 										tri.cle === cle
 											? tri.sens === 1
@@ -467,24 +524,28 @@ function Liste({
 									</button>
 								</th>
 							))}
-							<th className="py-2">Étiquettes</th>
+							<th className="px-4 py-2.5 font-semibold">Étiquettes</th>
 						</tr>
 					</thead>
 					<tbody>
 						{lignes.map((c) => (
 							<tr
 								key={c.id}
-								className="border-b border-zinc-200 dark:border-zinc-800"
+								className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
 							>
-								<td className="py-2 pr-3">
-									<Link to={`/candidatures/${c.id}`} className="underline">
+								<td className="px-4 py-3">
+									<Link to={`/candidatures/${c.id}`} className={lien}>
 										{c.poste}
 									</Link>
 								</td>
-								<td className="py-2 pr-3">{nomEntreprise(c.entrepriseId)}</td>
-								<td className="py-2 pr-3">{libellesStatut[c.statut]}</td>
-								<td className="py-2 pr-3">{dateFr(c.dateEnvoi)}</td>
-								<td className="py-2">
+								<td className="px-4 py-3">{nomEntreprise(c.entrepriseId)}</td>
+								<td className="px-4 py-3">
+									<BadgeStatut statut={c.statut} />
+								</td>
+								<td className="px-4 py-3 tabular-nums">
+									{dateFr(c.dateEnvoi) || "—"}
+								</td>
+								<td className="px-4 py-3">
 									<Etiquettes liste={c.etiquettes} />
 								</td>
 							</tr>
@@ -636,7 +697,10 @@ function FormulaireCandidature({
 			{b.mode === "offre" && offres.length === 0 && (
 				<p className={`text-sm ${discret}`}>
 					Aucune offre enregistrée : ajoutez-en une sur la page{" "}
-					<Link to="/offres" className="underline">
+					<Link
+						to="/offres"
+						className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					>
 						Offres
 					</Link>
 					, ou choisissez « Spontanée ».
@@ -846,7 +910,9 @@ export function PageNouvelleCandidature() {
 			<Link to="/candidatures" className="text-sm underline">
 				← Candidatures
 			</Link>
-			<h1 className="text-2xl font-bold">Nouvelle candidature</h1>
+			<h1 className="text-2xl font-semibold tracking-tight">
+				Nouvelle candidature
+			</h1>
 			<p className={discret}>
 				Relance n'envoie rien : postulez de votre côté, puis passez la
 				candidature à « Envoyée ».
@@ -888,8 +954,13 @@ export function PageCandidature() {
 	if (!c)
 		return (
 			<>
-				<h1 className="text-2xl font-bold">Candidature introuvable</h1>
-				<Link to="/candidatures" className="underline">
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Candidature introuvable
+				</h1>
+				<Link
+					to="/candidatures"
+					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				>
 					Retour aux candidatures
 				</Link>
 			</>
@@ -914,7 +985,9 @@ export function PageCandidature() {
 	if (edition)
 		return (
 			<>
-				<h1 className="text-2xl font-bold">Modifier « {c.poste} »</h1>
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Modifier « {c.poste} »
+				</h1>
 				<FormulaireCandidature
 					initial={{
 						...c,
@@ -936,7 +1009,11 @@ export function PageCandidature() {
 	const infos: [string, React.ReactNode][] = [
 		[
 			"Entreprise",
-			<Link key="e" to={`/entreprises/${c.entrepriseId}`} className="underline">
+			<Link
+				key="e"
+				to={`/entreprises/${c.entrepriseId}`}
+				className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+			>
 				{nomEntreprise(c.entrepriseId)}
 			</Link>,
 		],
@@ -973,7 +1050,7 @@ export function PageCandidature() {
 					{...(cv?.format === "docx"
 						? { download: "" }
 						: { target: "_blank", rel: "noreferrer" })}
-					className="underline"
+					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
 				>
 					{cv?.nom ?? "CV masqué de vos documents"} (
 					{cv?.format === "docx" ? "télécharger" : "aperçu"})
@@ -984,139 +1061,174 @@ export function PageCandidature() {
 
 	return (
 		<>
-			<Link to="/candidatures" className="text-sm underline">
-				← Candidatures
-			</Link>
-			<h1 className="text-2xl font-bold">{c.poste}</h1>
-			<div className="flex flex-wrap items-end gap-3">
-				<ChoixStatut c={c} changer={changer} />
-				<button
-					type="button"
-					className={boutonSecondaire}
-					onClick={() => setEdition(true)}
-				>
-					Modifier
-				</button>
-				<button
-					type="button"
-					className={boutonSecondaire}
-					onClick={() =>
-						window.confirm(
-							`Supprimer la candidature « ${c.poste} » et son historique ? Cette action est définitive.`,
-						) &&
-						agir(
-							candidatures
-								.supprimer(c.id)
-								.then(() => navigate("/candidatures")),
-						)
-					}
-				>
-					Supprimer
-				</button>
-			</div>
+			<EnTete
+				retour={{ vers: "/candidatures", libelle: "Candidatures" }}
+				titre={c.poste}
+				description={
+					<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+						<BadgeStatut statut={c.statut} />
+						<Link to={`/entreprises/${c.entrepriseId}`} className={lien}>
+							{nomEntreprise(c.entrepriseId)}
+						</Link>
+						{c.dateEnvoi && <span>· envoyée le {dateFr(c.dateEnvoi)}</span>}
+					</span>
+				}
+				actions={
+					<>
+						<button
+							type="button"
+							className={boutonSecondaire}
+							onClick={() => setEdition(true)}
+						>
+							Modifier
+						</button>
+						<button
+							type="button"
+							className={`${boutonSecondaire} text-rose-700 dark:text-rose-300`}
+							onClick={() =>
+								window.confirm(
+									`Supprimer la candidature « ${c.poste} » et son historique ? Cette action est définitive.`,
+								) &&
+								agir(
+									candidatures
+										.supprimer(c.id)
+										.then(() => navigate("/candidatures")),
+								)
+							}
+						>
+							Supprimer
+						</button>
+					</>
+				}
+			/>
 			{erreur && (
 				<p role="alert" className={alerte}>
 					{erreur}
 				</p>
 			)}
-			<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-				{infos
-					.filter(([, v]) => v)
-					.map(([k, v]) => (
-						<div key={k} className="contents">
-							<dt className={discret}>{k}</dt>
-							<dd>{v}</dd>
-						</div>
-					))}
-			</dl>
-			<Etiquettes liste={c.etiquettes} />
-			{c.notes && (
-				<section>
-					<h2 className="font-semibold">Notes</h2>
-					<p className="whitespace-pre-line">{c.notes}</p>
-				</section>
-			)}
-			{c.lettre && (
-				<details>
-					<summary className="cursor-pointer font-semibold">
-						Lettre envoyée
-					</summary>
-					<p className="mt-2 whitespace-pre-line">{c.lettre}</p>
-				</details>
-			)}
+			<p className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-100">
+				<strong>Prochaine étape : </strong>
+				{prochaineEtape[c.statut]}
+			</p>
 
-			<PreparerEnvoi c={c} />
+			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+				{/* Sur mobile, le résumé passe en premier. */}
+				<aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:order-2">
+					<section className={carte} aria-label="Résumé de la candidature">
+						<ChoixStatut c={c} changer={changer} />
+						<dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
+							{infos
+								.filter(([, v]) => v)
+								.map(([k, v]) => (
+									<div key={k} className="contents">
+										<dt className={discret}>{k}</dt>
+										<dd className="min-w-0 break-words">{v}</dd>
+									</div>
+								))}
+						</dl>
+						<Etiquettes liste={c.etiquettes} />
+					</section>
+					{c.notes && (
+						<section className={carte}>
+							<h2 className="text-base">Notes</h2>
+							<p className="text-sm whitespace-pre-line">{c.notes}</p>
+						</section>
+					)}
+					{c.lettre && (
+						<details className={carte}>
+							<summary className="font-semibold">
+								Lettre de la candidature
+							</summary>
+							<p className="mt-2 text-sm whitespace-pre-line">{c.lettre}</p>
+						</details>
+					)}
+				</aside>
 
-			<BrouillonsIa
-				candidatureId={c.id}
-				poste={c.poste}
-				spontanee={!c.offreId}
-				envoyee={c.statut !== "brouillon"}
-				onUtiliserLettre={(lettre) => candidatures.modifier(c.id, { lettre })}
-			/>
+				<div className="flex min-w-0 flex-col gap-6">
+					<PreparerEnvoi c={c} />
 
-			<RappelsCandidature candidatureId={c.id} poste={c.poste} />
-
-			<section
-				aria-labelledby={`${idForm}-rep`}
-				className="flex flex-col gap-3"
-			>
-				<h2 id={`${idForm}-rep`} className="text-xl font-semibold">
-					Ajouter une réponse reçue
-				</h2>
-				<form onSubmit={ajouterReponse} className="flex flex-col gap-3">
-					<label htmlFor={`${idForm}-texte`} className="font-medium">
-						Texte de la réponse (collez le message reçu)
-					</label>
-					<textarea
-						id={`${idForm}-texte`}
-						required
-						rows={4}
-						maxLength={20000}
-						value={reponse.texte}
-						onChange={(e) => setReponse({ ...reponse, texte: e.target.value })}
-						className={champ}
+					<BrouillonsIa
+						candidatureId={c.id}
+						poste={c.poste}
+						spontanee={!c.offreId}
+						envoyee={c.statut !== "brouillon"}
+						onUtiliserLettre={(lettre) =>
+							candidatures.modifier(c.id, { lettre })
+						}
 					/>
-					<label htmlFor={`${idForm}-date`} className="font-medium">
-						Reçue le
-					</label>
-					<input
-						id={`${idForm}-date`}
-						type="date"
-						required
-						value={reponse.date}
-						onChange={(e) => setReponse({ ...reponse, date: e.target.value })}
-						className={champ}
-					/>
-					<button type="submit" className={bouton}>
-						Ajouter la réponse
-					</button>
-				</form>
-			</section>
 
-			<section
-				aria-labelledby={`${idForm}-hist`}
-				className="flex flex-col gap-2"
-			>
-				<h2 id={`${idForm}-hist`} className="text-xl font-semibold">
-					Historique
-				</h2>
-				<ol className="flex flex-col gap-2">
-					{historique.data?.map((ev) => (
-						<li key={ev.id} className="border-l-2 border-zinc-400 pl-3">
-							<span className={`text-sm ${discret}`}>{dateFr(ev.date)}</span>{" "}
-							{ev.type === "statut" ? (
-								<>Statut : {libellesStatut[ev.statut ?? "brouillon"]}</>
-							) : (
-								<>
-									Réponse reçue
-									<p className="whitespace-pre-line">{ev.texte}</p>
-								</>
-							)}
-						</li>
-					))}
-				</ol>
-			</section>
+					<RappelsCandidature candidatureId={c.id} poste={c.poste} />
+
+					<details className={carte}>
+						<summary className="font-semibold">
+							Ajouter une réponse reçue
+						</summary>
+						<form onSubmit={ajouterReponse} className="flex flex-col gap-3">
+							<label htmlFor={`${idForm}-texte`} className="font-medium">
+								Texte de la réponse (collez le message reçu)
+							</label>
+							<textarea
+								id={`${idForm}-texte`}
+								required
+								rows={4}
+								maxLength={20000}
+								value={reponse.texte}
+								onChange={(e) =>
+									setReponse({ ...reponse, texte: e.target.value })
+								}
+								className={champ}
+							/>
+							<label htmlFor={`${idForm}-date`} className="font-medium">
+								Reçue le
+							</label>
+							<input
+								id={`${idForm}-date`}
+								type="date"
+								required
+								value={reponse.date}
+								onChange={(e) =>
+									setReponse({ ...reponse, date: e.target.value })
+								}
+								className={champ}
+							/>
+							<button type="submit" className={bouton}>
+								Ajouter la réponse
+							</button>
+						</form>
+					</details>
+
+					<section aria-labelledby={`${idForm}-hist`} className={carte}>
+						<h2 id={`${idForm}-hist`}>Historique</h2>
+						{historique.data?.length ? (
+							<ol className="flex flex-col gap-3 border-l-2 border-zinc-200 pl-4 dark:border-zinc-800">
+								{historique.data.map((ev) => (
+									<li key={ev.id} className="relative text-sm">
+										<span
+											aria-hidden="true"
+											className="absolute top-1.5 -left-[1.4rem] size-2.5 rounded-full border-2 border-white bg-teal-500 dark:border-zinc-900"
+										/>
+										<span className={`block text-xs ${discret}`}>
+											{dateFr(ev.date)}
+										</span>
+										{ev.type === "statut" ? (
+											<>Statut : {libellesStatut[ev.statut ?? "brouillon"]}</>
+										) : (
+											<>
+												Réponse reçue
+												<p className="mt-1 whitespace-pre-line">{ev.texte}</p>
+											</>
+										)}
+									</li>
+								))}
+							</ol>
+						) : (
+							<p className={`text-sm ${discret}`}>
+								Les changements de statut et les réponses s'afficheront ici.
+							</p>
+						)}
+					</section>
+				</div>
+			</div>
 		</>
 	);
 }
@@ -1142,7 +1254,10 @@ export function CandidaturesEntreprise({
 				<ul className="flex flex-col gap-1">
 					{siennes.map((c) => (
 						<li key={c.id}>
-							<Link to={`/candidatures/${c.id}`} className="underline">
+							<Link
+								to={`/candidatures/${c.id}`}
+								className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+							>
 								{c.poste}
 							</Link>{" "}
 							<span className={discret}>· {libellesStatut[c.statut]}</span>

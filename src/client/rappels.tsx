@@ -14,7 +14,18 @@ import { Calendrier } from "./calendrier";
 import { MesDonnees } from "./compte";
 import { AccordIa } from "./ia";
 import { useRessource } from "./repertoire";
-import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
+import {
+	alerte,
+	bouton,
+	boutonSecondaire,
+	Chargement,
+	carte,
+	champ,
+	discret,
+	EnTete,
+	EtatVide,
+	lien,
+} from "./ui";
 
 const aujourdhui = () => new Date().toLocaleDateString("sv-SE");
 const dateFr = (iso: string) =>
@@ -23,8 +34,6 @@ const dateFr = (iso: string) =>
 		day: "numeric",
 		month: "short",
 	});
-const carte =
-	"flex flex-col gap-2 rounded-md border border-zinc-300 p-3 dark:border-zinc-700";
 
 function useReglages() {
 	return useQuery({
@@ -54,76 +63,104 @@ function ElementRappel({
 	};
 	const fait = r.statut === "fait";
 
+	const enRetard = !fait && r.date < aujourdhui();
+
 	return (
-		<li className={`${carte} ${fait ? "opacity-70" : ""}`}>
-			<span>
-				<span className="font-medium">{r.titre}</span>{" "}
-				<span className={`text-sm ${discret}`}>
-					· {typesRappel[r.type]} · {dateFr(r.date)}
+		<li className="flex items-start gap-3 py-3">
+			<button
+				type="button"
+				aria-pressed={fait}
+				onClick={() =>
+					agir(modifier(r.id, { statut: fait ? "a_faire" : "fait" }))
+				}
+				className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors ${
+					fait
+						? "border-teal-600 bg-teal-600 text-white dark:border-teal-400 dark:bg-teal-400 dark:text-teal-950"
+						: "border-zinc-400 hover:border-teal-500 dark:border-zinc-600"
+				}`}
+			>
+				<span aria-hidden="true">{fait ? "✓" : ""}</span>
+				<span className="sr-only">
+					{fait ? "Remettre à faire" : "Marquer comme fait"} : {r.titre}
 				</span>
-			</span>
-			{candidature && (
-				<Link
-					to={`/candidatures/${candidature.id}`}
-					className="text-sm underline"
+			</button>
+			<div className="flex min-w-0 grow flex-col gap-0.5">
+				<span
+					className={`font-medium ${fait ? `line-through ${discret}` : ""}`}
 				>
-					Candidature : {candidature.poste}
-				</Link>
-			)}
-			<span className="flex flex-wrap items-end gap-2">
-				<button
-					type="button"
-					className={boutonSecondaire}
-					onClick={() =>
-						agir(modifier(r.id, { statut: fait ? "a_faire" : "fait" }))
-					}
-				>
-					{fait ? "Remettre à faire" : "Fait"}
-					<span className="sr-only"> : {r.titre}</span>
-				</button>
+					{r.titre}
+				</span>
+				<span className={`text-sm ${discret}`}>
+					{typesRappel[r.type]} ·{" "}
+					<span
+						className={
+							enRetard ? "font-medium text-rose-700 dark:text-rose-300" : ""
+						}
+					>
+						{enRetard ? "en retard, " : ""}
+						{dateFr(r.date)}
+					</span>
+				</span>
+				{candidature && (
+					<Link
+						to={`/candidatures/${candidature.id}`}
+						className={`text-sm ${lien}`}
+					>
+						{candidature.poste}
+					</Link>
+				)}
+			</div>
+			<div className="flex shrink-0 items-center gap-1">
 				{!fait && (
-					<>
-						<button
-							type="button"
-							className={boutonSecondaire}
-							onClick={() => reporter(3)}
-						>
-							+3 jours<span className="sr-only"> : {r.titre}</span>
-						</button>
-						<button
-							type="button"
-							className={boutonSecondaire}
-							onClick={() => reporter(7)}
-						>
-							+1 semaine<span className="sr-only"> : {r.titre}</span>
-						</button>
-						<span className="flex items-end gap-1">
-							<label htmlFor={id} className="sr-only">
-								Nouvelle date pour {r.titre}
+					<details className="relative">
+						<summary className={`${boutonSecondaire} list-none`}>
+							Reporter<span className="sr-only"> : {r.titre}</span>
+						</summary>
+						<div className="absolute right-0 z-20 mt-1 flex w-64 flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+							<div className="flex gap-2">
+								<button
+									type="button"
+									className={`${boutonSecondaire} grow`}
+									onClick={() => reporter(3)}
+								>
+									+3 jours
+								</button>
+								<button
+									type="button"
+									className={`${boutonSecondaire} grow`}
+									onClick={() => reporter(7)}
+								>
+									+1 semaine
+								</button>
+							</div>
+							<label htmlFor={id} className={`text-sm ${discret}`}>
+								Ou à une date précise
 							</label>
-							<input
-								id={id}
-								type="date"
-								value={date}
-								onChange={(e) => setDate(e.target.value)}
-								className={`${champ} py-1 text-sm`}
-							/>
-							<button
-								type="button"
-								className={boutonSecondaire}
-								disabled={!date}
-								onClick={() =>
-									agir(modifier(r.id, { date }).then(() => setDate("")))
-								}
-							>
-								Reporter
-							</button>
-						</span>
-					</>
+							<div className="flex gap-2">
+								<input
+									id={id}
+									type="date"
+									value={date}
+									onChange={(e) => setDate(e.target.value)}
+									className={`${champ} min-w-0 grow py-1 text-sm`}
+								/>
+								<button
+									type="button"
+									className={boutonSecondaire}
+									disabled={!date}
+									onClick={() =>
+										agir(modifier(r.id, { date }).then(() => setDate("")))
+									}
+								>
+									OK
+								</button>
+							</div>
+						</div>
+					</details>
 				)}
 				<button
 					type="button"
-					className={boutonSecondaire}
+					className={`rounded-lg px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${discret}`}
 					onClick={() =>
 						window.confirm(`Supprimer le rappel « ${r.titre} » ?`) &&
 						agir(supprimer(r.id))
@@ -131,7 +168,7 @@ function ElementRappel({
 				>
 					Supprimer<span className="sr-only"> : {r.titre}</span>
 				</button>
-			</span>
+			</div>
 		</li>
 	);
 }
@@ -251,14 +288,14 @@ function Section({
 }) {
 	if (!rappels.length) return null;
 	return (
-		<section className="flex flex-col gap-2">
-			<h2 className="text-xl font-semibold">
-				{titre}{" "}
-				<span className={`text-base font-normal ${discret}`}>
+		<section className={carte}>
+			<h2 className="flex items-baseline gap-2">
+				{titre}
+				<span className={`text-sm font-normal tabular-nums ${discret}`}>
 					{rappels.length}
 				</span>
 			</h2>
-			<ul className="flex flex-col gap-2">
+			<ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
 				{rappels.map((r) => (
 					<ElementRappel
 						key={r.id}
@@ -278,8 +315,7 @@ export function PageRappels() {
 	const reglages = useReglages().data;
 	const qc = useQueryClient();
 	const [erreur, setErreur] = useState("");
-	if (!rappels || !candidatures.liste.data || !reglages)
-		return <p>Chargement…</p>;
+	if (!rappels || !candidatures.liste.data || !reglages) return <Chargement />;
 	const liste = candidatures.liste.data;
 	const auj = aujourdhui();
 	const aFaire = rappels.filter((r) => r.statut === "a_faire");
@@ -291,55 +327,59 @@ export function PageRappels() {
 
 	return (
 		<>
-			<h1 className="text-2xl font-bold">Rappels</h1>
-			<p className={discret}>
-				{reglages.emailsRappel
-					? "Un e-mail récapitule vos rappels du jour à 7 h (heure de Paris)."
-					: "Les e-mails de rappel sont désactivés."}{" "}
-				<Link to="/parametres" className="underline">
-					Modifier dans les paramètres
-				</Link>
-			</p>
+			<EnTete
+				titre="Rappels"
+				description={
+					<>
+						{reglages.emailsRappel
+							? "Un e-mail récapitule vos rappels du jour à 7 h (heure de Paris)."
+							: "Les e-mails de rappel sont désactivés."}{" "}
+						<Link to="/parametres" className={lien}>
+							Modifier
+						</Link>
+					</>
+				}
+				actions={
+					<a
+						href="/api/rappels/export.ics"
+						download
+						className={boutonSecondaire}
+					>
+						Exporter (.ics)
+					</a>
+				}
+			/>
 			{erreur && (
 				<p role="alert" className={alerte}>
 					{erreur}
 				</p>
 			)}
-			<details className="rounded-md border border-dashed border-zinc-400 p-4">
-				<summary className="cursor-pointer font-semibold">
-					Ajouter un rappel
-				</summary>
-				<div className="mt-4">
+			<details className={carte}>
+				<summary className="font-semibold">Ajouter un rappel</summary>
+				<div className="mt-3">
 					<NouveauRappel candidatures={liste} />
 				</div>
 			</details>
-			<details className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
-				<summary className="cursor-pointer font-semibold">
-					Vue calendrier
-				</summary>
+			<details className={carte}>
+				<summary className="font-semibold">Vue calendrier</summary>
 				<div className="mt-4">
 					<Calendrier rappels={rappels} aujourdhui={auj} />
 				</div>
 			</details>
-			<p>
-				<a href="/api/rappels/export.ics" download className="underline">
-					Exporter les rappels à faire vers mon agenda (.ics)
-				</a>
-				<span className={`block text-sm ${discret}`}>
-					Le fichier s'importe dans Google Agenda, Outlook ou Calendrier ; il
-					n'est pas mis à jour automatiquement.
-				</span>
+			<p className={`text-sm ${discret}`}>
+				L'export .ics s'importe dans Google Agenda, Outlook ou Calendrier ; il
+				n'est pas mis à jour automatiquement.
 			</p>
 
 			{sansReponse.length > 0 && (
-				<section className="flex flex-col gap-2">
-					<h2 className="text-xl font-semibold">
-						Sans réponse depuis plus de {reglages.delaiSansReponse} jours
-					</h2>
-					<p className={discret}>Relancer ou abandonner : à vous de décider.</p>
-					<ul className="flex flex-col gap-2">
+				<section className={`${carte} border-amber-200 dark:border-amber-900`}>
+					<h2>Sans réponse depuis plus de {reglages.delaiSansReponse} jours</h2>
+					<p className={`text-sm ${discret}`}>
+						Relancer ou abandonner : à vous de décider.
+					</p>
+					<ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
 						{sansReponse.map((c) => (
-							<li key={c.id} className={carte}>
+							<li key={c.id} className="flex flex-col gap-2 py-3">
 								<Link
 									to={`/candidatures/${c.id}`}
 									className="font-medium underline"
@@ -410,7 +450,12 @@ export function PageRappels() {
 				candidatures={liste}
 				onErreur={setErreur}
 			/>
-			{aFaire.length === 0 && <p className={discret}>Aucun rappel à faire.</p>}
+			{aFaire.length === 0 && (
+				<EtatVide titre="Aucun rappel à faire">
+					Les relances sont proposées automatiquement une semaine après chaque
+					envoi. Ajoutez un rappel pour un entretien ou une date limite.
+				</EtatVide>
+			)}
 			{rappels.some((r) => r.statut === "fait") && (
 				<details>
 					<summary className="cursor-pointer font-semibold">
@@ -445,27 +490,27 @@ export function RappelsCandidature({
 	const [erreur, setErreur] = useState("");
 	const siens = rappels.filter((r) => r.candidatureId === candidatureId);
 	return (
-		<section className="flex flex-col gap-3">
-			<h2 className="text-xl font-semibold">Rappels</h2>
+		<section className={carte}>
+			<h2>Rappels</h2>
 			{erreur && (
 				<p role="alert" className={alerte}>
 					{erreur}
 				</p>
 			)}
 			{siens.length === 0 ? (
-				<p className={discret}>Aucun rappel pour cette candidature.</p>
+				<p className={`text-sm ${discret}`}>
+					Aucun rappel pour cette candidature.
+				</p>
 			) : (
-				<ul className="flex flex-col gap-2">
+				<ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
 					{siens.map((r) => (
 						<ElementRappel key={r.id} r={r} onErreur={setErreur} />
 					))}
 				</ul>
 			)}
-			<details className="rounded-md border border-dashed border-zinc-400 p-4">
-				<summary className="cursor-pointer font-semibold">
-					Ajouter un rappel
-				</summary>
-				<div className="mt-4">
+			<details className="rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
+				<summary className="text-sm font-semibold">Ajouter un rappel</summary>
+				<div className="mt-3">
 					<NouveauRappel candidatureId={candidatureId} posteParDefaut={poste} />
 				</div>
 			</details>
@@ -506,9 +551,9 @@ function FormulaireReglages({ initial }: { initial: Reglages }) {
 
 	return (
 		<>
-			<h1 className="text-2xl font-bold">Paramètres</h1>
+			<h1 className="text-2xl font-semibold tracking-tight">Paramètres</h1>
 			<form onSubmit={envoyer} className="flex flex-col gap-4">
-				<fieldset className="flex flex-col gap-3 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+				<fieldset className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
 					<legend className="px-1 font-semibold">Rappels</legend>
 					<label htmlFor={`${id}-relance`} className="font-medium">
 						Relance proposée combien de jours après l'envoi

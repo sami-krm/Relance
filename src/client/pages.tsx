@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router";
 import { authClient } from "./auth";
-import { alerte, bouton, discret, Page } from "./ui";
+import { alerte, bouton, champ, discret, Page, succes } from "./ui";
 
 export function Accueil() {
 	const session = authClient.useSession();
@@ -25,21 +25,34 @@ export function Accueil() {
 	return (
 		<Page>
 			{params.has("compte") && (
-				<p role="status" className="rounded-md border border-zinc-400 p-3">
+				<p role="status" className={succes}>
 					Votre compte et toutes vos données ont été supprimés.
 				</p>
 			)}
-			<h1 className="text-4xl font-bold">Relance</h1>
-			<p className="text-lg">
+			<h1 className="text-4xl font-semibold tracking-tight">
+				Ne laissez plus une candidature sans réponse.
+			</h1>
+			<p className={`text-lg ${discret}`}>
 				Suivre ses candidatures d'alternance et ne jamais oublier une relance.
 			</p>
-			<ul className={`flex list-disc flex-col gap-1 pl-5 ${discret}`}>
-				<li>Vos offres, candidatures et entreprises au même endroit.</li>
-				<li>
+			<ul className="flex flex-col gap-2">
+				<li className="flex gap-2">
+					<span aria-hidden="true" className="text-teal-600 dark:text-teal-400">
+						✓
+					</span>
+					Vos offres, candidatures et entreprises au même endroit.
+				</li>
+				<li className="flex gap-2">
+					<span aria-hidden="true" className="text-teal-600 dark:text-teal-400">
+						✓
+					</span>
 					Une relance proposée une semaine après chaque envoi, et un e-mail de
 					rappel le jour venu.
 				</li>
-				<li>
+				<li className="flex gap-2">
+					<span aria-hidden="true" className="text-teal-600 dark:text-teal-400">
+						✓
+					</span>
 					Gratuit, sans mot de passe, données hébergées dans l'Union européenne.
 				</li>
 			</ul>
@@ -82,7 +95,9 @@ export function Connexion() {
 	if (etat === "envoye") {
 		return (
 			<Page>
-				<h1 className="text-2xl font-bold">Vérifiez vos e-mails</h1>
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Vérifiez vos e-mails
+				</h1>
 				<p role="status">
 					Un lien de connexion a été envoyé à {email}. Il expire dans 15 minutes
 					et ne sert qu'une fois.
@@ -93,7 +108,7 @@ export function Connexion() {
 
 	return (
 		<Page>
-			<h1 className="text-2xl font-bold">Connexion</h1>
+			<h1 className="text-2xl font-semibold tracking-tight">Connexion</h1>
 			<p>
 				Saisissez votre adresse e-mail : vous recevrez un lien pour vous
 				connecter, sans mot de passe.
@@ -109,7 +124,7 @@ export function Connexion() {
 					autoComplete="email"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
-					className="rounded-md border border-zinc-400 bg-transparent px-3 py-2"
+					className={champ}
 				/>
 				<button type="submit" disabled={etat === "envoi"} className={bouton}>
 					{etat === "envoi" ? "Envoi…" : "Recevoir le lien"}
@@ -136,8 +151,13 @@ export function LienConnexion() {
 	if (!token) {
 		return (
 			<Page>
-				<h1 className="text-2xl font-bold">Lien incomplet</h1>
-				<Link to="/connexion" className="underline">
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Lien incomplet
+				</h1>
+				<Link
+					to="/connexion"
+					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				>
 					Demander un nouveau lien
 				</Link>
 			</Page>
@@ -154,7 +174,9 @@ export function LienConnexion() {
 
 	return (
 		<Page>
-			<h1 className="text-2xl font-bold">Connexion à Relance</h1>
+			<h1 className="text-2xl font-semibold tracking-tight">
+				Connexion à Relance
+			</h1>
 			<p>Ce lien ne sert qu'une fois.</p>
 			<button type="button" className={bouton} onClick={seConnecter}>
 				Me connecter
@@ -166,8 +188,13 @@ export function LienConnexion() {
 export function PageIntrouvable() {
 	return (
 		<Page>
-			<h1 className="text-2xl font-bold">Page introuvable</h1>
-			<Link to="/" className="underline">
+			<h1 className="text-2xl font-semibold tracking-tight">
+				Page introuvable
+			</h1>
+			<Link
+				to="/"
+				className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+			>
 				Retour à l'accueil
 			</Link>
 		</Page>

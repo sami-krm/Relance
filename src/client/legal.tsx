@@ -25,7 +25,10 @@ function PageTexte({
 }
 
 const contact = (
-	<a href="mailto:hello@skrim.dev" className="underline">
+	<a
+		href="mailto:hello@skrim.dev"
+		className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+	>
 		hello@skrim.dev
 	</a>
 );
@@ -48,7 +51,10 @@ export function MentionsLegales() {
 			<h2>Données personnelles</h2>
 			<p>
 				Voir la{" "}
-				<Link to="/confidentialite" className="underline">
+				<Link
+					to="/confidentialite"
+					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				>
 					politique de confidentialité
 				</Link>
 				.
@@ -143,7 +149,10 @@ export function Confidentialite() {
 			</ul>
 			<p>
 				Vous pouvez aussi adresser une réclamation à la CNIL (
-				<a href="https://www.cnil.fr" className="underline">
+				<a
+					href="https://www.cnil.fr"
+					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				>
 					cnil.fr
 				</a>
 				).

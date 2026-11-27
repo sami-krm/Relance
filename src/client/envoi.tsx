@@ -100,8 +100,8 @@ export function PreparerEnvoi({ c }: { c: Candidature }) {
 
 	if (c.statut !== "brouillon")
 		return c.envoi ? (
-			<details className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
-				<summary className="cursor-pointer text-xl font-semibold">
+			<details className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+				<summary className="text-lg font-semibold">
 					Ce qui a été transmis le {dateFr(c.envoi.date)}
 				</summary>
 				<div className="mt-3">
@@ -168,11 +168,9 @@ export function PreparerEnvoi({ c }: { c: Candidature }) {
 		<details
 			open={ouvert}
 			onToggle={(e) => setOuvert(e.currentTarget.open)}
-			className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700"
+			className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
 		>
-			<summary className="cursor-pointer text-xl font-semibold">
-				Préparer l'envoi
-			</summary>
+			<summary className="text-lg font-semibold">Préparer l'envoi</summary>
 			<div className="mt-3 flex flex-col gap-3">
 				{!apercu ? (
 					<>

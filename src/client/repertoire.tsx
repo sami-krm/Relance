@@ -10,7 +10,16 @@ import {
 import { api, json } from "./api";
 import { CandidaturesEntreprise } from "./candidatures";
 import { EstimationCorrespondance } from "./correspondance";
-import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
+import {
+	alerte,
+	bouton,
+	boutonSecondaire,
+	Chargement,
+	champ,
+	discret,
+	EnTete,
+	EtatVide,
+} from "./ui";
 
 type Valeurs = Record<string, string>;
 type ChampForm = {
@@ -23,7 +32,7 @@ type ChampForm = {
 };
 
 const carte =
-	"flex flex-col gap-1 rounded-md border border-zinc-300 p-3 dark:border-zinc-700";
+	"flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900";
 const lienExterne = "underline break-all";
 const dateFr = (iso: string) =>
 	iso ? new Date(`${iso}T00:00`).toLocaleDateString("fr-FR") : "";
@@ -215,7 +224,7 @@ function Ajout({
 	children: React.ReactNode;
 }) {
 	return (
-		<details className="rounded-md border border-dashed border-zinc-400 p-4">
+		<details className="rounded-xl border border-dashed border-zinc-300 bg-white/60 p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
 			<summary className="cursor-pointer font-semibold">{titre}</summary>
 			<div className="mt-4">{children}</div>
 		</details>
@@ -230,12 +239,15 @@ export function PageEntreprises() {
 	const offres = useRessource<Offre>("/offres").liste.data ?? [];
 	if (entreprises.liste.isError)
 		return <p className={alerte}>Impossible de charger les entreprises.</p>;
-	if (!entreprises.liste.data) return <p>Chargement…</p>;
+	if (!entreprises.liste.data) return <Chargement />;
 	const compte = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
 
 	return (
 		<>
-			<h1 className="text-2xl font-bold">Entreprises</h1>
+			<EnTete
+				titre="Entreprises"
+				description="Les entreprises qui vous intéressent, avec leurs contacts, leurs offres et vos candidatures."
+			/>
 			<Ajout titre="Ajouter une entreprise">
 				<Formulaire
 					champs={champsEntreprise}
@@ -244,7 +256,10 @@ export function PageEntreprises() {
 				/>
 			</Ajout>
 			{entreprises.liste.data.length === 0 ? (
-				<p className={discret}>Aucune entreprise pour l'instant.</p>
+				<EtatVide titre="Aucune entreprise pour l'instant">
+					Ajoutez-en une ci-dessus. Elle est aussi créée automatiquement quand
+					vous ajoutez une offre trouvée par la recherche.
+				</EtatVide>
 			) : (
 				<ul className="flex flex-col gap-2">
 					{entreprises.liste.data.map((e) => (
@@ -293,8 +308,13 @@ export function PageEntreprise() {
 	if (!e)
 		return (
 			<>
-				<h1 className="text-2xl font-bold">Entreprise introuvable</h1>
-				<Link to="/entreprises" className="underline">
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Entreprise introuvable
+				</h1>
+				<Link
+					to="/entreprises"
+					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				>
 					Retour aux entreprises
 				</Link>
 			</>
@@ -325,7 +345,9 @@ export function PageEntreprise() {
 			</Link>
 			{edition ? (
 				<section className="flex flex-col gap-3">
-					<h1 className="text-2xl font-bold">Modifier « {e.nom} »</h1>
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Modifier « {e.nom} »
+					</h1>
 					<Formulaire
 						champs={champsEntreprise}
 						initial={e}
@@ -338,7 +360,7 @@ export function PageEntreprise() {
 				</section>
 			) : (
 				<section className="flex flex-col gap-2">
-					<h1 className="text-2xl font-bold">{e.nom}</h1>
+					<h1 className="text-2xl font-semibold tracking-tight">{e.nom}</h1>
 					<p className={discret}>
 						{[e.ville, e.secteur].filter(Boolean).join(" · ") ||
 							"Ville et secteur non renseignés"}
@@ -485,7 +507,13 @@ function ListeOffres({
 	const [erreur, setErreur] = useState("");
 	const agir = (p: Promise<unknown>) =>
 		p.catch((err) => setErreur(err.message));
-	if (liste.length === 0) return <p className={discret}>Aucune offre.</p>;
+	if (liste.length === 0)
+		return (
+			<EtatVide titre="Aucune offre enregistrée">
+				Ajoutez une offre à la main ci-dessus, ou trouvez-en avec la recherche
+				d'offres.
+			</EtatVide>
+		);
 
 	return (
 		<>
@@ -603,15 +631,26 @@ export function PageOffres() {
 	const entreprises = useRessource<Entreprise>("/entreprises").liste.data;
 	const offres = useRessource<Offre>("/offres");
 	const [avecExpirees, setAvecExpirees] = useState(true);
-	if (!entreprises || !offres.liste.data) return <p>Chargement…</p>;
+	if (!entreprises || !offres.liste.data) return <Chargement />;
 	const visibles = offres.liste.data.filter((o) => avecExpirees || !o.expiree);
 
 	return (
 		<>
-			<h1 className="text-2xl font-bold">Offres</h1>
-			<p className={discret}>
+			<EnTete
+				titre="Mes offres"
+				description="Les offres que vous avez enregistrées, avant d'y candidater."
+				actions={
+					<Link to="/recherche" className={bouton}>
+						Rechercher des offres
+					</Link>
+				}
+			/>
+			<p className={`text-sm ${discret}`}>
 				Vous avez le lien d'une offre ? Ajoutez-la depuis la page{" "}
-				<Link to="/recherche" className="underline">
+				<Link
+					to="/recherche"
+					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				>
 					Recherche
 				</Link>
 				, qui lit la page pour préremplir les champs.
@@ -620,7 +659,10 @@ export function PageOffres() {
 				{entreprises.length === 0 ? (
 					<p>
 						Ajoutez d'abord l'entreprise sur la page{" "}
-						<Link to="/entreprises" className="underline">
+						<Link
+							to="/entreprises"
+							className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+						>
 							Entreprises
 						</Link>
 						.

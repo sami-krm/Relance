@@ -34,7 +34,10 @@ function Donnees({ d }: { d: DonneesIa }) {
 			<p>
 				<strong>Votre profil</strong> (seulement les champs que vous avez
 				autorisés au partage, modifiables dans votre{" "}
-				<Link to="/profil" className="underline">
+				<Link
+					to="/profil"
+					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				>
 					profil
 				</Link>
 				) :
@@ -133,10 +136,8 @@ export function BrouillonsIa({
 		}, "Enregistré dans vos documents.");
 
 	return (
-		<details className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
-			<summary className="cursor-pointer text-xl font-semibold">
-				Brouillons avec l'IA
-			</summary>
+		<details className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+			<summary className="text-lg font-semibold">Brouillons avec l'IA</summary>
 			<div className="mt-3 flex flex-col gap-3">
 				{!etat.data || !donnees.data ? (
 					etat.isError || donnees.isError ? (
@@ -155,7 +156,10 @@ export function BrouillonsIa({
 						<p className="text-sm">
 							Votre accord vaut pour toutes vos candidatures. Vous pouvez le
 							retirer à tout moment dans les{" "}
-							<Link to="/parametres" className="underline">
+							<Link
+								to="/parametres"
+								className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+							>
 								paramètres
 							</Link>
 							.

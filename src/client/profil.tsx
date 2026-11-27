@@ -3,7 +3,7 @@ import { useState } from "react";
 import { type Profil, sectionsProfil } from "../shared/schemas";
 import { api, json } from "./api";
 import { authClient } from "./auth";
-import { alerte, bouton, champ, discret } from "./ui";
+import { alerte, bouton, Chargement, champ, discret, EnTete } from "./ui";
 
 const typesInput: Record<string, string> = {
 	tel: "tel",
@@ -23,7 +23,7 @@ export function PageProfil() {
 				Impossible de charger le profil.
 			</p>
 		);
-	if (!profil.data) return <p>Chargement…</p>;
+	if (!profil.data) return <Chargement />;
 	return (
 		<FormulaireProfil
 			initial={profil.data}
@@ -83,20 +83,15 @@ function FormulaireProfil({
 			}}
 			className="flex flex-col gap-6"
 		>
-			<div className="flex flex-col gap-2">
-				<h1 className="text-2xl font-bold">Mon profil</h1>
-				<p className={discret}>
-					Tous les champs sont facultatifs. Les cases « Utilisable dans mes
-					candidatures » serviront quand Relance aidera à préparer les
-					candidatures (version 2) : seules les informations cochées pourront y
-					être reprises.
-				</p>
-			</div>
+			<EnTete
+				titre="Profil"
+				description="Tous les champs sont facultatifs. Seules les informations cochées « Utilisable dans mes candidatures » sont reprises : dans l'aperçu d'envoi, et dans les brouillons de l'IA si vous l'avez accepté."
+			/>
 
 			{sectionsProfil.map((section, i) => (
 				<fieldset
 					key={section.titre}
-					className="flex flex-col gap-5 rounded-md border border-zinc-300 p-4 dark:border-zinc-700"
+					className="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
 				>
 					<legend className="px-1 font-semibold">{section.titre}</legend>
 					{i === 0 && (

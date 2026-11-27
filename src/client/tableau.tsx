@@ -7,10 +7,19 @@ import {
 } from "../shared/schemas";
 import { statistiques } from "../shared/statistiques";
 import { useRessource } from "./repertoire";
-import { bouton, discret } from "./ui";
+import {
+	alerte,
+	bouton,
+	Chargement,
+	carte,
+	discret,
+	EnTete,
+	lien,
+	pastilleStatut,
+} from "./ui";
 
 const aujourdhui = () => new Date().toLocaleDateString("sv-SE");
-const dateFr = (iso: string) =>
+const dateCourte = (iso: string) =>
 	new Date(`${iso}T00:00`).toLocaleDateString("fr-FR", {
 		weekday: "short",
 		day: "numeric",
@@ -18,37 +27,53 @@ const dateFr = (iso: string) =>
 	});
 
 function Demarrage() {
-	const etapes: [string, string][] = [
+	const etapes: [string, string, string][] = [
 		[
 			"/profil",
-			"Complétez votre profil (formation, rythme d'alternance, recherche).",
+			"Compléter votre profil",
+			"Formation, rythme d'alternance et métiers recherchés : ils préremplissent la recherche d'offres.",
 		],
-		["/documents", "Importez votre CV en PDF et vos lettres types."],
 		[
-			"/entreprises",
-			"Ajoutez les entreprises qui vous intéressent, puis leurs offres.",
+			"/documents",
+			"Importer votre CV",
+			"En PDF ou DOCX. Relance le garde tel quel et ne le modifie jamais.",
+		],
+		[
+			"/recherche",
+			"Trouver des offres",
+			"Recherchez des offres d'alternance ou ajoutez-en une depuis son lien.",
 		],
 		[
 			"/candidatures/nouvelle",
-			"Créez votre première candidature et suivez-la jusqu'à la réponse.",
+			"Créer votre première candidature",
+			"Depuis une offre ou en candidature spontanée, puis suivez-la jusqu'à la réponse.",
 		],
 	];
 	return (
 		<>
-			<h1 className="text-2xl font-bold">Bienvenue sur Relance</h1>
-			<p className={discret}>
-				Vous n'avez encore aucune candidature. Pour commencer :
-			</p>
-			<ol className="flex list-decimal flex-col gap-2 pl-6">
-				{etapes.map(([lien, texte]) => (
-					<li key={lien}>
-						<Link to={lien} className="underline">
-							{texte}
+			<EnTete
+				titre="Bienvenue sur Relance"
+				description="Vous n'avez encore aucune candidature. Quatre étapes pour démarrer :"
+			/>
+			<ol className="grid gap-3 sm:grid-cols-2">
+				{etapes.map(([vers, titre, texte], i) => (
+					<li key={vers}>
+						<Link
+							to={vers}
+							className={`${carte} h-full transition-colors hover:border-teal-300 dark:hover:border-teal-800`}
+						>
+							<span className="flex items-center gap-3">
+								<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-sm font-semibold text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+									{i + 1}
+								</span>
+								<span className="font-semibold">{titre}</span>
+							</span>
+							<span className={`text-sm ${discret}`}>{texte}</span>
 						</Link>
 					</li>
 				))}
 			</ol>
-			<p className={discret}>
+			<p className={`text-sm ${discret}`}>
 				Dès qu'une candidature passe à « Envoyée », Relance vous propose une
 				relance une semaine plus tard.
 			</p>
@@ -56,108 +81,191 @@ function Demarrage() {
 	);
 }
 
+function LigneRappel({ r, auj }: { r: Rappel; auj: string }) {
+	const enRetard = r.date < auj;
+	return (
+		<li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
+			<span
+				className={`rounded-md px-2 py-0.5 text-xs font-medium ${
+					enRetard
+						? "bg-rose-50 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200"
+						: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+				}`}
+			>
+				{enRetard ? `En retard · ${dateCourte(r.date)}` : dateCourte(r.date)}
+			</span>
+			<span className="min-w-0 grow">
+				{r.candidatureId ? (
+					<Link to={`/candidatures/${r.candidatureId}`} className={lien}>
+						{r.titre}
+					</Link>
+				) : (
+					r.titre
+				)}
+			</span>
+			<span className={`text-sm ${discret}`}>{typesRappel[r.type]}</span>
+		</li>
+	);
+}
+
 export function PageTableau() {
-	const candidatures = useRessource<Candidature>("/candidatures").liste.data;
-	const rappels = useRessource<Rappel>("/rappels").liste.data;
-	if (!candidatures || !rappels) return <p>Chargement…</p>;
-	if (candidatures.length === 0) return <Demarrage />;
+	const candidatures = useRessource<Candidature>("/candidatures").liste;
+	const rappels = useRessource<Rappel>("/rappels").liste;
+	if (candidatures.isError || rappels.isError)
+		return (
+			<p role="alert" className={alerte}>
+				Impossible de charger le tableau de bord. Rechargez la page.
+			</p>
+		);
+	if (!candidatures.data || !rappels.data) return <Chargement />;
+	if (candidatures.data.length === 0) return <Demarrage />;
 
 	const auj = aujourdhui();
-	const s = statistiques(candidatures, rappels, auj);
-	const chiffres: [string, string | number][] = [
-		["Candidatures en cours", s.enCours],
-		["Envoyées cette semaine", s.envoyeesSemaine],
-		["Envoyées ce mois-ci", s.envoyeesMois],
-		["Entretiens à venir", s.entretiensAVenir],
-		["Rappels du jour", s.rappelsDuJour],
-		["Rappels en retard", s.rappelsEnRetard],
-		["Réponses reçues", s.reponses],
-		["Taux de réponse", s.tauxReponse === null ? "—" : `${s.tauxReponse} %`],
-	];
-	const urgents = rappels
-		.filter((r) => r.statut === "a_faire" && r.date <= auj)
-		.slice(0, 5);
-	const entretiens = rappels.filter(
-		(r) => r.statut === "a_faire" && r.type === "entretien" && r.date >= auj,
+	const s = statistiques(candidatures.data, rappels.data, auj);
+	const aFaire = rappels.data.filter(
+		(r) => r.statut === "a_faire" && r.date <= auj,
 	);
-	const max = Math.max(1, ...s.parStatut.map((p) => p.nombre));
+	const entretiens = rappels.data.filter(
+		(r) => r.statut === "a_faire" && r.type === "entretien" && r.date > auj,
+	);
+	const brouillons = candidatures.data.filter((c) => c.statut === "brouillon");
+	const principaux: [string, string | number, string][] = [
+		["En cours", s.enCours, "candidatures envoyées ou en discussion"],
+		["Cette semaine", s.envoyeesSemaine, "candidatures envoyées"],
+		["Entretiens", s.entretiensAVenir, "à venir"],
+		[
+			"Taux de réponse",
+			s.tauxReponse === null ? "—" : `${s.tauxReponse} %`,
+			"réponse, entretien, offre ou refus",
+		],
+	];
+	const total = Math.max(
+		1,
+		s.parStatut.reduce((n, p) => n + p.nombre, 0),
+	);
 
 	return (
 		<>
-			<div className="flex flex-wrap items-center gap-3">
-				<h1 className="mr-auto text-2xl font-bold">Tableau de bord</h1>
-				<Link to="/candidatures/nouvelle" className={bouton}>
-					Nouvelle candidature
-				</Link>
-			</div>
-			<dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-				{chiffres.map(([libelle, valeur]) => (
-					<div
-						key={libelle}
-						className="flex flex-col-reverse rounded-md border border-zinc-300 p-3 dark:border-zinc-700"
-					>
-						<dt className={`text-sm ${discret}`}>{libelle}</dt>
-						<dd className="text-2xl font-bold">{valeur}</dd>
-					</div>
-				))}
-			</dl>
-			<p className={`text-sm ${discret}`}>
-				Le taux de réponse compte les candidatures qui ont obtenu une réponse
-				(réponse, entretien, offre ou refus) parmi celles envoyées.
-			</p>
+			<EnTete
+				titre="Tableau de bord"
+				description="Ce qui demande votre attention aujourd'hui, puis où en est votre recherche."
+				actions={
+					// Sur ordinateur, le bouton est déjà dans la barre latérale.
+					<Link to="/candidatures/nouvelle" className={`${bouton} lg:hidden`}>
+						Nouvelle candidature
+					</Link>
+				}
+			/>
 
-			<section className="flex flex-col gap-2">
-				<h2 className="text-xl font-semibold">Rappels du jour et en retard</h2>
-				{urgents.length === 0 ? (
-					<p className={discret}>Rien d'urgent.</p>
-				) : (
-					<ul className="flex flex-col gap-1">
-						{urgents.map((r) => (
-							<li key={r.id}>
-								{r.titre}{" "}
-								<span className={discret}>
-									· {typesRappel[r.type]} ·{" "}
-									{r.date < auj
-										? `en retard (${dateFr(r.date)})`
-										: "aujourd'hui"}
+			<div className="grid gap-4 lg:grid-cols-[3fr_2fr]">
+				<section aria-labelledby="titre-afaire" className={carte}>
+					<div className="flex items-baseline justify-between gap-3">
+						<h2 id="titre-afaire">À faire maintenant</h2>
+						<Link to="/rappels" className={`text-sm ${lien}`}>
+							Tous les rappels
+						</Link>
+					</div>
+					{aFaire.length === 0 && brouillons.length === 0 ? (
+						<p className={`py-2 text-sm ${discret}`}>
+							Rien d'urgent : aucun rappel pour aujourd'hui ni en retard.
+						</p>
+					) : (
+						<ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+							{aFaire.map((r) => (
+								<LigneRappel key={r.id} r={r} auj={auj} />
+							))}
+							{brouillons.slice(0, 3).map((c) => (
+								<li
+									key={c.id}
+									className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3"
+								>
+									<span className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+										Brouillon
+									</span>
+									<span className="min-w-0 grow">
+										<Link to={`/candidatures/${c.id}`} className={lien}>
+											{c.poste}
+										</Link>
+									</span>
+									<span className={`text-sm ${discret}`}>
+										à préparer et envoyer
+									</span>
+								</li>
+							))}
+						</ul>
+					)}
+				</section>
+
+				<section aria-labelledby="titre-entretiens" className={carte}>
+					<h2 id="titre-entretiens">Entretiens à venir</h2>
+					{entretiens.length === 0 ? (
+						<p className={`py-2 text-sm ${discret}`}>
+							Aucun entretien prévu. Ajoutez-en un depuis la candidature
+							concernée.
+						</p>
+					) : (
+						<ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+							{entretiens.slice(0, 5).map((r) => (
+								<LigneRappel key={r.id} r={r} auj={auj} />
+							))}
+						</ul>
+					)}
+				</section>
+			</div>
+
+			<section aria-labelledby="titre-chiffres" className="flex flex-col gap-3">
+				<h2 id="titre-chiffres">Votre recherche en chiffres</h2>
+				<dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+					{principaux.map(([libelle, valeur, aide]) => (
+						<div key={libelle} className={carte}>
+							<dt className={`text-sm font-medium ${discret}`}>{libelle}</dt>
+							<dd className="flex flex-col">
+								<span className="text-3xl font-semibold tracking-tight tabular-nums">
+									{valeur}
 								</span>
-							</li>
-						))}
-					</ul>
-				)}
-				<Link to="/rappels" className="self-start underline">
-					Tous les rappels
-				</Link>
+								<span className={`text-xs ${discret}`}>{aide}</span>
+							</dd>
+						</div>
+					))}
+				</dl>
+				<p className={`text-sm ${discret}`}>
+					Ce mois-ci : {s.envoyeesMois} envoyée{s.envoyeesMois > 1 ? "s" : ""} ·{" "}
+					{s.reponses} réponse{s.reponses > 1 ? "s" : ""} reçue
+					{s.reponses > 1 ? "s" : ""} au total · {s.rappelsEnRetard} rappel
+					{s.rappelsEnRetard > 1 ? "s" : ""} en retard.
+				</p>
 			</section>
 
-			{entretiens.length > 0 && (
-				<section className="flex flex-col gap-2">
-					<h2 className="text-xl font-semibold">Entretiens à venir</h2>
-					<ul className="flex flex-col gap-1">
-						{entretiens.map((r) => (
-							<li key={r.id}>
-								{dateFr(r.date)} · {r.titre}
-							</li>
-						))}
-					</ul>
-				</section>
-			)}
-
-			<section className="flex flex-col gap-2">
-				<h2 className="text-xl font-semibold">Répartition par statut</h2>
-				<ul className="flex flex-col gap-2">
+			<section aria-labelledby="titre-statuts" className={carte}>
+				<h2 id="titre-statuts">Répartition par statut</h2>
+				<div
+					aria-hidden="true"
+					className="flex h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+				>
 					{s.parStatut.map(({ statut, nombre }) => (
-						<li
+						<span
 							key={statut}
-							className="grid grid-cols-[9rem_1fr_2rem] items-center gap-2"
-						>
-							<span>{libellesStatut[statut]}</span>
+							className={pastilleStatut[statut]}
+							style={{ width: `${(100 * nombre) / total}%` }}
+						/>
+					))}
+				</div>
+				<ul className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
+					{s.parStatut.map(({ statut, nombre }) => (
+						<li key={statut} className="flex items-center gap-2">
 							<span
 								aria-hidden="true"
-								className="h-3 rounded bg-zinc-700 dark:bg-zinc-300"
-								style={{ width: `${(100 * nombre) / max}%` }}
+								className={`size-2.5 rounded-full ${pastilleStatut[statut]}`}
 							/>
-							<span className="text-right">{nombre}</span>
+							<Link
+								to={`/candidatures?vue=liste&statut=${statut}`}
+								className="hover:underline"
+							>
+								{libellesStatut[statut]}
+							</Link>
+							<span className={`ml-auto tabular-nums ${discret}`}>
+								{nombre}
+							</span>
 						</li>
 					))}
 				</ul>

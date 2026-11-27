@@ -15,7 +15,16 @@ import {
 import { api, json } from "./api";
 import { EstimationCorrespondance } from "./correspondance";
 import { useRessource } from "./repertoire";
-import { alerte, bouton, boutonSecondaire, champ, discret } from "./ui";
+import {
+	alerte,
+	bouton,
+	boutonSecondaire,
+	Chargement,
+	champ,
+	discret,
+	EnTete,
+	lien,
+} from "./ui";
 
 type Criteres = {
 	motsCles: string;
@@ -25,7 +34,7 @@ type Criteres = {
 };
 
 const carte =
-	"flex flex-col gap-1 rounded-md border border-zinc-300 p-3 dark:border-zinc-700";
+	"flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900";
 const dateFr = (iso: string) =>
 	iso ? new Date(`${iso}T00:00`).toLocaleDateString("fr-FR") : "";
 
@@ -36,7 +45,7 @@ export function PageRecherche() {
 	});
 	if (profil.isError)
 		return <p className={alerte}>Impossible de charger votre profil.</p>;
-	if (!profil.data) return <p>Chargement…</p>;
+	if (!profil.data) return <Chargement />;
 	const p = profil.data.valeurs;
 	return (
 		<Recherche
@@ -87,15 +96,19 @@ function Recherche({ initial }: { initial: Criteres }) {
 
 	return (
 		<>
-			<h1 className="text-2xl font-bold">Rechercher des offres</h1>
-			<p className={discret}>
-				Les champs sont préremplis depuis votre{" "}
-				<Link to="/profil" className="underline">
-					profil
-				</Link>
-				. Seules les offres en alternance (apprentissage ou
-				professionnalisation) sont cherchées.
-			</p>
+			<EnTete
+				titre="Rechercher des offres"
+				description={
+					<>
+						Offres d'alternance (apprentissage ou professionnalisation). Les
+						champs sont préremplis depuis votre{" "}
+						<Link to="/profil" className={lien}>
+							profil
+						</Link>
+						.
+					</>
+				}
+			/>
 			<Enregistrees onRelancer={relancer} />
 			<form onSubmit={chercher} className="flex flex-col gap-3">
 				<div className="flex flex-col gap-1">
@@ -411,7 +424,10 @@ function CarteOffre({
 			{dejaAjoutee ? (
 				<p className="text-sm">
 					Déjà dans{" "}
-					<Link to="/offres" className="underline">
+					<Link
+						to="/offres"
+						className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					>
 						vos offres
 					</Link>
 					.
@@ -512,7 +528,7 @@ function AjoutParLien() {
 	return (
 		<details
 			id="ajout-lien"
-			className="rounded-md border border-dashed border-zinc-400 p-4"
+			className="rounded-xl border border-dashed border-zinc-300 bg-white/60 p-4 dark:border-zinc-700 dark:bg-zinc-900/40"
 		>
 			<summary className="cursor-pointer font-semibold">
 				Ajouter une offre depuis son lien
@@ -545,7 +561,10 @@ function AjoutParLien() {
 			{ajoutee && (
 				<p className="mt-3 text-sm">
 					Offre ajoutée à{" "}
-					<Link to="/offres" className="underline">
+					<Link
+						to="/offres"
+						className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					>
 						vos offres
 					</Link>
 					.
@@ -593,7 +612,7 @@ function AjoutParLien() {
 // Les sources réellement utilisées, sans en promettre d'autres.
 function Sources() {
 	return (
-		<details className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+		<details className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
 			<summary className="cursor-pointer font-semibold">
 				Sources prises en charge
 			</summary>
