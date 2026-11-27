@@ -1,6 +1,10 @@
 import { env, exports } from "cloudflare:workers";
 import { afterEach, expect, it, vi } from "vitest";
-import { doitEnvoyer, envoyerRappels } from "../src/server/rappels";
+import {
+	calendrierIcs,
+	doitEnvoyer,
+	envoyerRappels,
+} from "../src/server/rappels";
 import type { Rappel, Reglages } from "../src/shared/schemas";
 import { api, connecter, json, site } from "./outils";
 
@@ -187,4 +191,47 @@ it("n'envoie qu'à 7 h heure de Paris, été comme hiver", () => {
 	expect(doitEnvoyer(new Date("2026-12-15T05:00:00Z"))).toBe(false);
 	expect(doitEnvoyer(new Date("2027-07-15T05:00:00Z"))).toBe(true);
 	expect(doitEnvoyer(new Date("2027-07-15T06:00:00Z"))).toBe(false);
+});
+
+it("exporte les rappels à faire au format iCalendar", async () => {
+	const cookie = await connecter("ics@exemple.test");
+	await creer(cookie, "/rappels", {
+		type: "entretien",
+		titre: "Entretien Atelier, salle 2; bureau B",
+		date: "2027-01-12",
+	});
+	const fait = await creer(cookie, "/rappels", {
+		type: "tache",
+		titre: "Déjà faite",
+		date: "2027-01-13",
+	});
+	await modifier(cookie, `/rappels/${fait}`, { statut: "fait" });
+
+	const res = await api(cookie, "/rappels/export.ics");
+	expect(res.headers.get("content-type")).toContain("text/calendar");
+	expect(res.headers.get("content-disposition")).toContain(".ics");
+	const ics = await res.text();
+	expect(ics.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
+	expect(ics).toContain("DTSTART;VALUE=DATE:20270112\r\n");
+	expect(ics).toContain("DTEND;VALUE=DATE:20270113\r\n");
+	expect(ics).toContain(
+		"SUMMARY:Entretien : Entretien Atelier\\, salle 2\\; bureau B",
+	);
+	expect(ics).not.toContain("Déjà faite");
+	expect(
+		(await exports.default.fetch(`${site}/api/rappels/export.ics`)).status,
+	).toBe(401);
+});
+
+it("replie les lignes iCalendar trop longues sans couper un caractère", () => {
+	const ics = calendrierIcs(
+		[{ id: "x", type: "tache", titre: "é".repeat(80), date: "2027-01-01" }],
+		new Date("2026-11-27T10:00:00Z"),
+	);
+	for (const ligne of ics.split("\r\n"))
+		expect(new TextEncoder().encode(ligne).length).toBeLessThanOrEqual(75);
+	expect(ics.replace(/\r\n /g, "")).toContain(
+		`SUMMARY:Tâche : ${"é".repeat(80)}`,
+	);
+	expect(ics).toContain("DTSTAMP:20261127T100000Z");
 });

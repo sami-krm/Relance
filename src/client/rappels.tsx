@@ -10,6 +10,7 @@ import {
 	typesRappel,
 } from "../shared/schemas";
 import { api, json } from "./api";
+import { Calendrier } from "./calendrier";
 import { MesDonnees } from "./compte";
 import { AccordIa } from "./ia";
 import { useRessource } from "./repertoire";
@@ -312,6 +313,23 @@ export function PageRappels() {
 					<NouveauRappel candidatures={liste} />
 				</div>
 			</details>
+			<details className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+				<summary className="cursor-pointer font-semibold">
+					Vue calendrier
+				</summary>
+				<div className="mt-4">
+					<Calendrier rappels={rappels} aujourdhui={auj} />
+				</div>
+			</details>
+			<p>
+				<a href="/api/rappels/export.ics" download className="underline">
+					Exporter les rappels à faire vers mon agenda (.ics)
+				</a>
+				<span className={`block text-sm ${discret}`}>
+					Le fichier s'importe dans Google Agenda, Outlook ou Calendrier ; il
+					n'est pas mis à jour automatiquement.
+				</span>
+			</p>
 
 			{sansReponse.length > 0 && (
 				<section className="flex flex-col gap-2">

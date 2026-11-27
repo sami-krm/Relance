@@ -14,6 +14,7 @@ import {
 	rappelSchema,
 	reglagesParDefaut,
 	reglagesSchema,
+	type TypeRappel,
 	typesRappel,
 } from "../shared/schemas";
 import { sendEmail } from "./email";
@@ -80,8 +81,77 @@ export async function relanceAuto(
 const duCompte = (c: C) =>
 	and(eq(rappel.id, c.req.param("id") ?? ""), eq(rappel.userId, c.var.userId));
 
+// Export iCalendar (RFC 5545) : un événement sur la journée par rappel à faire.
+const echapper = (t: string) =>
+	t
+		.replace(/\\/g, "\\\\")
+		.replace(/([,;])/g, "\\$1")
+		.replace(/\r?\n/g, "\\n");
+const dateIcs = (iso: string) => iso.replaceAll("-", "");
+// Les lignes de plus de 75 octets se replient : retour à la ligne suivi d'une espace.
+function plier(ligne: string) {
+	const octets = new TextEncoder();
+	const morceaux: string[] = [];
+	let courant = "";
+	for (const car of ligne) {
+		if (octets.encode(courant + car).length > (morceaux.length ? 74 : 75)) {
+			morceaux.push(courant);
+			courant = "";
+		}
+		courant += car;
+	}
+	morceaux.push(courant);
+	return morceaux.join("\r\n ");
+}
+
+export function calendrierIcs(
+	rappels: { id: string; type: TypeRappel; titre: string; date: string }[],
+	maintenant = new Date(),
+) {
+	const horodatage = `${maintenant.toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`;
+	return [
+		"BEGIN:VCALENDAR",
+		"VERSION:2.0",
+		"PRODID:-//Relance//Rappels//FR",
+		"CALSCALE:GREGORIAN",
+		...rappels.flatMap((r) => [
+			"BEGIN:VEVENT",
+			`UID:${r.id}@relance.skrim.dev`,
+			`DTSTAMP:${horodatage}`,
+			`DTSTART;VALUE=DATE:${dateIcs(r.date)}`,
+			`DTEND;VALUE=DATE:${dateIcs(ajouterJours(r.date, 1))}`,
+			`SUMMARY:${echapper(`${typesRappel[r.type]} : ${r.titre}`)}`,
+			"END:VEVENT",
+		]),
+		"END:VCALENDAR",
+	]
+		.map(plier)
+		.join("\r\n")
+		.concat("\r\n");
+}
+
 export const routesRappels = new Hono<Contexte>()
 	.use(exigerSession)
+	.get("/export.ics", async (c) => {
+		const rappels = await bd(c.env)
+			.select({
+				id: rappel.id,
+				type: rappel.type,
+				titre: rappel.titre,
+				date: rappel.date,
+			})
+			.from(rappel)
+			.where(and(eq(rappel.userId, c.var.userId), eq(rappel.statut, "a_faire")))
+			.orderBy(asc(rappel.date));
+		return c.body(
+			calendrierIcs(rappels as Parameters<typeof calendrierIcs>[0]),
+			200,
+			{
+				"content-type": "text/calendar; charset=utf-8",
+				"content-disposition": 'attachment; filename="relance-rappels.ics"',
+			},
+		);
+	})
 	.get("/", async (c) =>
 		c.json(
 			await bd(c.env)

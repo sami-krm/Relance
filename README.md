@@ -60,6 +60,7 @@
 - Rappels de relance, d'entretien, de date limite ou de tâche, à faire, reporter (+3 jours, +1 semaine, date au choix) ou supprimer.
 - Les candidatures **sans réponse depuis trois semaines** sont signalées : relancer ou abandonner, c'est vous qui décidez.
 - Un **e-mail récapitulatif à 7 h** (heure de Paris, été comme hiver) le jour des rappels, désactivable.
+- **Vue calendrier** mensuelle et **export .ics** des rappels à faire, pour Google Agenda, Outlook ou Calendrier.
 
 ### 🗂️ Profil, documents, entreprises et offres
 - Profil complet (formation, rythme d'alternance, recherche, parcours), avec pour chaque champ le choix de pouvoir le réutiliser.
