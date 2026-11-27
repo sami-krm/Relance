@@ -181,6 +181,8 @@ export const offre = sqliteTable(
 		dateLimite: texte("date_limite"),
 		description: texte("description"),
 		expiree: integer("expiree", { mode: "boolean" }).notNull().default(false),
+		// Dernière vérification de l'expiration auprès de la source (AAAA-MM-JJ), vide si jamais vérifiée.
+		verifieeLe: texte("verifiee_le"),
 		...horodatage(),
 	},
 	(t) => [

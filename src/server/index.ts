@@ -6,6 +6,7 @@ import { auth } from "./auth";
 import { routesCandidatures } from "./candidatures";
 import { routesCompte } from "./compte";
 import { routesDocuments } from "./documents";
+import { verifierExpirations } from "./expiration";
 import { routesProfil } from "./profil";
 import {
 	aujourdhuiParis,
@@ -68,10 +69,15 @@ app.route("/compte", routesCompte);
 
 export default {
 	fetch: app.fetch,
-	// Rappels du matin : envoyés une seule fois, à 7 h heure de Paris.
+	// Deux déclenchements par jour (5 h et 6 h UTC) : celui de 7 h heure de Paris envoie les rappels,
+	// l'autre vérifie l'expiration des offres. Chacun garde ainsi toute la limite d'appels sortants.
 	async scheduled(controleur, env, ctx) {
 		const moment = new Date(controleur.scheduledTime);
-		if (doitEnvoyer(moment))
-			ctx.waitUntil(envoyerRappels(env, aujourdhuiParis(moment)));
+		const jour = aujourdhuiParis(moment);
+		ctx.waitUntil(
+			doitEnvoyer(moment)
+				? envoyerRappels(env, jour)
+				: verifierExpirations(env, jour),
+		);
 	},
 } satisfies ExportedHandler<Env>;

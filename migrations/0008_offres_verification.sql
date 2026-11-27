@@ -1,0 +1,1 @@
+ALTER TABLE `offer` ADD `verifiee_le` text DEFAULT '' NOT NULL;

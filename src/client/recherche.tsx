@@ -453,6 +453,12 @@ function Sources() {
 				alternance. Les autres sites (LinkedIn, Indeed…) ne sont pas interrogés
 				; ajoutez leurs offres à la main.
 			</p>
+			<p className={`mt-2 text-sm ${discret}`}>
+				Chaque matin, les offres ajoutées depuis La bonne alternance sont
+				vérifiées auprès d'elle : une offre pourvue, annulée ou expirée est
+				marquée « Expirée ». Les offres France Travail qu'elle relaie ne peuvent
+				pas être vérifiées ainsi.
+			</p>
 		</details>
 	);
 }

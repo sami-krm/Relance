@@ -73,6 +73,8 @@
 - Filtres préremplis depuis le profil : métier, ville, distance, date de début.
 - **Ajout en un clic** à « Mes offres », avec la source ; l'entreprise est retrouvée ou créée.
 - **Doublons repérés** : même identifiant à la source, ou même entreprise, même intitulé et même ville.
+- **Recherches enregistrées** avec leurs filtres, relancées en un clic.
+- **Offres expirées signalées** : chaque matin, les offres ajoutées sont vérifiées auprès de La bonne alternance (pourvue, annulée, retirée ou date passée).
 
 ### 📊 Tableau de bord et données
 - Candidatures en cours, envoyées dans la semaine et le mois, entretiens à venir, rappels, réponses et **taux de réponse**, répartition par statut.
