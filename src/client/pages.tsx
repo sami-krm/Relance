@@ -1,72 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
-import { Link, Navigate, useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { authClient } from "./auth";
-import { alerte, bouton, champ, discret, Page, succes } from "./ui";
-
-export function Accueil() {
-	const session = authClient.useSession();
-	const [params] = useSearchParams();
-	const health = useQuery({
-		queryKey: ["health"],
-		queryFn: async () => {
-			const res = await fetch("/api/health");
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			return res.json();
-		},
-	});
-	if (session.data) return <Navigate to="/tableau" replace />;
-	const status = health.isPending
-		? "vérification…"
-		: health.isSuccess
-			? "opérationnel"
-			: "indisponible";
-
-	return (
-		<Page>
-			{params.has("compte") && (
-				<p role="status" className={succes}>
-					Votre compte et toutes vos données ont été supprimés.
-				</p>
-			)}
-			<h1 className="text-4xl font-semibold tracking-tight">
-				Ne laissez plus une candidature sans réponse.
-			</h1>
-			<p className={`text-lg ${discret}`}>
-				Suivre ses candidatures d'alternance et ne jamais oublier une relance.
-			</p>
-			<ul className="flex flex-col gap-2">
-				<li className="flex gap-2">
-					<span aria-hidden="true" className="text-teal-600 dark:text-teal-400">
-						✓
-					</span>
-					Vos offres, candidatures et entreprises au même endroit.
-				</li>
-				<li className="flex gap-2">
-					<span aria-hidden="true" className="text-teal-600 dark:text-teal-400">
-						✓
-					</span>
-					Une relance proposée une semaine après chaque envoi, et un e-mail de
-					rappel le jour venu.
-				</li>
-				<li className="flex gap-2">
-					<span aria-hidden="true" className="text-teal-600 dark:text-teal-400">
-						✓
-					</span>
-					Gratuit, sans mot de passe, données hébergées dans l'Union européenne.
-				</li>
-			</ul>
-			{!session.isPending && (
-				<Link to="/connexion" className={bouton}>
-					Se connecter
-				</Link>
-			)}
-			<p role="status" className={`text-sm ${discret}`}>
-				État du service : {status}
-			</p>
-		</Page>
-	);
-}
+import { alerte, bouton, champ, discret, Page } from "./ui";
 
 export function Connexion() {
 	const [params] = useSearchParams();
@@ -156,7 +91,7 @@ export function LienConnexion() {
 				</h1>
 				<Link
 					to="/connexion"
-					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 				>
 					Demander un nouveau lien
 				</Link>
@@ -193,7 +128,7 @@ export function PageIntrouvable() {
 			</h1>
 			<Link
 				to="/"
-				className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 			>
 				Retour à l'accueil
 			</Link>

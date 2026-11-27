@@ -75,8 +75,8 @@ function ElementRappel({
 				}
 				className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors ${
 					fait
-						? "border-teal-600 bg-teal-600 text-white dark:border-teal-400 dark:bg-teal-400 dark:text-teal-950"
-						: "border-zinc-400 hover:border-teal-500 dark:border-zinc-600"
+						? "border-accent-600 bg-accent-600 text-white dark:border-accent-400 dark:bg-accent-400 dark:text-accent-950"
+						: "border-zinc-400 hover:border-accent-500 dark:border-zinc-600"
 				}`}
 			>
 				<span aria-hidden="true">{fait ? "✓" : ""}</span>

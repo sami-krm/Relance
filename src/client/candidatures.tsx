@@ -143,17 +143,17 @@ export function PageCandidatures() {
 					</Link>
 				}
 			/>
-			<fieldset className="flex self-start rounded-lg border border-zinc-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-900">
+			<fieldset className="flex self-start rounded-full border border-white/10 bg-white/[0.03] p-1">
 				<legend className="sr-only">Affichage</legend>
 				{(["tableau", "liste"] as const).map((v) => (
 					<button
 						key={v}
 						type="button"
 						aria-pressed={vue === v}
-						className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+						className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
 							vue === v
-								? "bg-teal-700 text-white dark:bg-teal-400 dark:text-teal-950"
-								: "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+								? "bg-white text-black"
+								: "text-white/60 hover:text-white"
 						}`}
 						onClick={() => setParams(v === "liste" ? { vue: "liste" } : {})}
 					>
@@ -314,7 +314,7 @@ function Colonne({
 		<section
 			ref={setNodeRef}
 			aria-label={`${libellesStatut[statut]} (${cartes.length})`}
-			className={`flex w-72 shrink-0 flex-col gap-2 rounded-xl bg-zinc-100/80 p-2 dark:bg-zinc-900/60 ${isOver ? "ring-2 ring-teal-500" : ""}`}
+			className={`flex w-72 shrink-0 flex-col gap-2 rounded-xl bg-zinc-100/80 p-2 dark:bg-zinc-900/60 ${isOver ? "ring-2 ring-accent-500" : ""}`}
 		>
 			<h2 className="flex items-center gap-2 px-2 pt-1 text-sm font-semibold">
 				<span
@@ -370,7 +370,7 @@ function Carte({
 				<span className="flex flex-col">
 					<Link
 						to={`/candidatures/${c.id}`}
-						className="font-medium hover:text-teal-700 hover:underline dark:hover:text-teal-300"
+						className="font-medium hover:text-accent-700 hover:underline dark:hover:text-accent-300"
 					>
 						{c.poste}
 					</Link>
@@ -699,7 +699,7 @@ function FormulaireCandidature({
 					Aucune offre enregistrée : ajoutez-en une sur la page{" "}
 					<Link
 						to="/offres"
-						className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+						className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 					>
 						Offres
 					</Link>
@@ -959,7 +959,7 @@ export function PageCandidature() {
 				</h1>
 				<Link
 					to="/candidatures"
-					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 				>
 					Retour aux candidatures
 				</Link>
@@ -1012,7 +1012,7 @@ export function PageCandidature() {
 			<Link
 				key="e"
 				to={`/entreprises/${c.entrepriseId}`}
-				className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+				className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 			>
 				{nomEntreprise(c.entrepriseId)}
 			</Link>,
@@ -1050,7 +1050,7 @@ export function PageCandidature() {
 					{...(cv?.format === "docx"
 						? { download: "" }
 						: { target: "_blank", rel: "noreferrer" })}
-					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 				>
 					{cv?.nom ?? "CV masqué de vos documents"} (
 					{cv?.format === "docx" ? "télécharger" : "aperçu"})
@@ -1106,7 +1106,7 @@ export function PageCandidature() {
 					{erreur}
 				</p>
 			)}
-			<p className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-100">
+			<p className="rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-900 dark:border-accent-900 dark:bg-accent-950/50 dark:text-accent-100">
 				<strong>Prochaine étape : </strong>
 				{prochaineEtape[c.statut]}
 			</p>
@@ -1205,7 +1205,7 @@ export function PageCandidature() {
 									<li key={ev.id} className="relative text-sm">
 										<span
 											aria-hidden="true"
-											className="absolute top-1.5 -left-[1.4rem] size-2.5 rounded-full border-2 border-white bg-teal-500 dark:border-zinc-900"
+											className="absolute top-1.5 -left-[1.4rem] size-2.5 rounded-full border-2 border-white bg-accent-500 dark:border-zinc-900"
 										/>
 										<span className={`block text-xs ${discret}`}>
 											{dateFr(ev.date)}
@@ -1256,7 +1256,7 @@ export function CandidaturesEntreprise({
 						<li key={c.id}>
 							<Link
 								to={`/candidatures/${c.id}`}
-								className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+								className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 							>
 								{c.poste}
 							</Link>{" "}

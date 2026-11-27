@@ -2,7 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
+import "@fontsource-variable/inter";
 import "./index.css";
+import { Accueil } from "./accueil";
 import {
 	PageCandidature,
 	PageCandidatures,
@@ -10,7 +12,7 @@ import {
 } from "./candidatures";
 import { PageDocuments } from "./documents";
 import { Confidentialite, MentionsLegales } from "./legal";
-import { Accueil, Connexion, LienConnexion, PageIntrouvable } from "./pages";
+import { Connexion, LienConnexion, PageIntrouvable } from "./pages";
 import { PageProfil } from "./profil";
 import { PageParametres, PageRappels } from "./rappels";
 import { PageRecherche } from "./recherche";

@@ -36,7 +36,7 @@ function Donnees({ d }: { d: DonneesIa }) {
 				autorisés au partage, modifiables dans votre{" "}
 				<Link
 					to="/profil"
-					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 				>
 					profil
 				</Link>
@@ -158,7 +158,7 @@ export function BrouillonsIa({
 							retirer à tout moment dans les{" "}
 							<Link
 								to="/parametres"
-								className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+								className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 							>
 								paramètres
 							</Link>

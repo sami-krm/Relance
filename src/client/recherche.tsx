@@ -426,7 +426,7 @@ function CarteOffre({
 					Déjà dans{" "}
 					<Link
 						to="/offres"
-						className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+						className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 					>
 						vos offres
 					</Link>
@@ -563,7 +563,7 @@ function AjoutParLien() {
 					Offre ajoutée à{" "}
 					<Link
 						to="/offres"
-						className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+						className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 					>
 						vos offres
 					</Link>

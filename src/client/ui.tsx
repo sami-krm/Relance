@@ -9,22 +9,22 @@ import {
 import { libellesStatut, type Statut } from "../shared/schemas";
 import { authClient } from "./auth";
 
-// Styles partagés : une seule définition pour toute l'application.
+// Styles partagés, d'après le template Projectise : pilules blanches, surfaces translucides, accent pervenche.
 export const bouton =
-	"inline-flex items-center justify-center gap-2 self-start rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-400 dark:text-teal-950 dark:hover:bg-teal-300";
+	"inline-flex items-center justify-center gap-2 self-start rounded-full bg-white px-5 py-2 text-sm font-medium text-black transition-colors hover:bg-white/85 disabled:cursor-not-allowed disabled:opacity-40";
 export const boutonSecondaire =
-	"inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 shadow-xs transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800";
+	"inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40";
 export const champ =
-	"rounded-lg border border-zinc-300 bg-white px-3 py-2 shadow-xs placeholder:text-zinc-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/25 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900";
-export const discret = "text-zinc-600 dark:text-zinc-400";
+	"rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-white [color-scheme:dark] placeholder:text-white/35 focus:border-accent-400/60 focus:ring-2 focus:ring-accent-400/20 focus:outline-none";
+export const discret = "text-white/55";
 export const alerte =
-	"rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200";
+	"rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200";
 export const succes =
-	"rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-900 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-100";
+	"rounded-xl border border-accent-400/30 bg-accent-400/10 px-3 py-2 text-sm text-accent-100";
 export const carte =
-	"flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900";
+	"flex flex-col gap-2 rounded-2xl border border-white/10 bg-[radial-gradient(80%_100%_at_0%_0%,rgba(255,255,255,0.06),rgba(255,255,255,0.015))] p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]";
 export const lien =
-	"font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700";
+	"font-medium text-accent-300 underline decoration-accent-300/40 hover:decoration-current";
 
 export const dateFr = (iso: string) =>
 	iso ? new Date(`${iso}T00:00`).toLocaleDateString("fr-FR") : "";
@@ -40,7 +40,7 @@ const couleursStatut: Record<Statut, string> = {
 	entretien:
 		"bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:ring-amber-900",
 	offre:
-		"bg-teal-50 text-teal-800 ring-teal-200 dark:bg-teal-950/50 dark:text-teal-200 dark:ring-teal-900",
+		"bg-accent-50 text-accent-800 ring-accent-200 dark:bg-accent-950/50 dark:text-accent-200 dark:ring-accent-900",
 	refusee:
 		"bg-rose-50 text-rose-800 ring-rose-200 dark:bg-rose-950/50 dark:text-rose-200 dark:ring-rose-900",
 	abandonnee:
@@ -51,7 +51,7 @@ export const pastilleStatut: Record<Statut, string> = {
 	envoyee: "bg-sky-500",
 	reponse: "bg-violet-500",
 	entretien: "bg-amber-500",
-	offre: "bg-teal-500",
+	offre: "bg-accent-500",
 	refusee: "bg-rose-500",
 	abandonnee: "bg-zinc-300 dark:bg-zinc-600",
 };
@@ -116,7 +116,7 @@ export function EtatVide({
 	action?: ReactNode;
 }) {
 	return (
-		<div className="flex flex-col items-start gap-2 rounded-xl border border-dashed border-zinc-300 bg-white/60 p-6 dark:border-zinc-700 dark:bg-zinc-900/40">
+		<div className="flex flex-col items-start gap-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-6">
 			<p className="font-medium">{titre}</p>
 			{children && (
 				<p className={`max-w-prose text-sm ${discret}`}>{children}</p>
@@ -131,7 +131,7 @@ export function Chargement({ texte = "Chargement…" }: { texte?: string }) {
 		<p role="status" className={`flex items-center gap-2 ${discret}`}>
 			<span
 				aria-hidden="true"
-				className="size-4 animate-spin rounded-full border-2 border-zinc-300 border-t-teal-600"
+				className="size-4 animate-spin rounded-full border-2 border-white/15 border-t-accent-400"
 			/>
 			{texte}
 		</p>
@@ -160,7 +160,11 @@ function Logo() {
 			to="/tableau"
 			className="flex items-center gap-2 font-semibold tracking-tight"
 		>
-			<img src="/icone.svg" alt="" className="size-7 rounded-lg" />
+			<img
+				src="/icone.svg"
+				alt=""
+				className="size-7 rounded-lg ring-1 ring-white/20"
+			/>
 			Relance
 		</Link>
 	);
@@ -210,10 +214,10 @@ const groupes: { titre: string; liens: [string, string][] }[] = [
 ];
 
 const lienNav = ({ isActive }: { isActive: boolean }) =>
-	`block rounded-lg px-3 py-2 text-sm transition-colors ${
+	`block rounded-xl px-3 py-2 text-sm transition-colors ${
 		isActive
-			? "bg-teal-50 font-semibold text-teal-800 dark:bg-teal-950/60 dark:text-teal-200"
-			: "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+			? "bg-white/10 font-medium text-white"
+			: "text-white/60 hover:bg-white/5 hover:text-white"
 	}`;
 
 function Navigation({ onNaviguer }: { onNaviguer?: () => void }) {
@@ -252,7 +256,7 @@ function Deconnexion() {
 	return (
 		<button
 			type="button"
-			className={`rounded-lg px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${discret}`}
+			className={`rounded-xl px-3 py-2 text-left text-sm hover:bg-white/5 hover:text-white ${discret}`}
 			onClick={() => authClient.signOut()}
 		>
 			Se déconnecter
@@ -275,12 +279,12 @@ export function EspaceConnecte() {
 		<div className="lg:grid lg:min-h-dvh lg:grid-cols-[16rem_1fr]">
 			<a
 				href="#contenu"
-				className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 dark:focus:bg-zinc-900"
+				className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-black"
 			>
 				Aller au contenu
 			</a>
 			{/* Ordinateur : barre latérale fixe. */}
-			<aside className="hidden border-r border-zinc-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:overflow-y-auto lg:p-4 dark:border-zinc-800 dark:bg-zinc-900">
+			<aside className="hidden border-r border-white/10 bg-black lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:overflow-y-auto lg:p-4">
 				<div className="px-2 pt-1">
 					<Logo />
 				</div>
@@ -293,7 +297,7 @@ export function EspaceConnecte() {
 				</div>
 			</aside>
 			{/* Mobile : barre du haut et menu déroulant. */}
-			<header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur lg:hidden dark:border-zinc-800 dark:bg-zinc-900/95">
+			<header className="sticky top-0 z-30 border-b border-white/10 bg-black/80 backdrop-blur-md lg:hidden">
 				<div className="flex items-center justify-between px-4 py-3">
 					<Logo />
 					<button
@@ -309,10 +313,10 @@ export function EspaceConnecte() {
 				{menu && (
 					<div
 						id="menu-mobile"
-						className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-zinc-200 px-4 py-4 dark:border-zinc-800"
+						className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-white/10 px-4 py-4"
 					>
 						<Navigation onNaviguer={() => setMenu(false)} />
-						<div className="mt-4 border-t border-zinc-200 pt-2 dark:border-zinc-800">
+						<div className="mt-4 border-t border-white/10 pt-2">
 							<Deconnexion />
 						</div>
 					</div>

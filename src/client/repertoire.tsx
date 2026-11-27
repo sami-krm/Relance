@@ -313,7 +313,7 @@ export function PageEntreprise() {
 				</h1>
 				<Link
 					to="/entreprises"
-					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 				>
 					Retour aux entreprises
 				</Link>
@@ -649,7 +649,7 @@ export function PageOffres() {
 				Vous avez le lien d'une offre ? Ajoutez-la depuis la page{" "}
 				<Link
 					to="/recherche"
-					className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+					className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 				>
 					Recherche
 				</Link>
@@ -661,7 +661,7 @@ export function PageOffres() {
 						Ajoutez d'abord l'entreprise sur la page{" "}
 						<Link
 							to="/entreprises"
-							className="font-medium text-teal-700 underline decoration-teal-300 hover:decoration-current dark:text-teal-300 dark:decoration-teal-700"
+							className="font-medium text-accent-700 underline decoration-accent-300 hover:decoration-current dark:text-accent-300 dark:decoration-accent-700"
 						>
 							Entreprises
 						</Link>

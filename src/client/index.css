@@ -1,50 +1,49 @@
 @import "tailwindcss";
+@import "../../styles/theme.css";
 
-/* Identité de Relance : le vert-bleu « teal » de Tailwind pour l'action, des neutres chauds pour le reste.
-   Styles de base en CSS simple (variables de Tailwind) : le lint du projet n'accepte pas @apply ni @theme. */
+/* Styles de base en CSS simple ; la palette et la variante sombre sont dans styles/theme.css. */
 
-:root {
-	color-scheme: light dark;
-}
-body {
-	background-color: var(--color-stone-50);
-	color: var(--color-zinc-900);
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
-@media (prefers-color-scheme: dark) {
-	body {
-		background-color: var(--color-zinc-950);
-		color: var(--color-zinc-100);
+/* Dans la couche « base » : les classes utilitaires de Tailwind gardent toujours le dernier mot. */
+@layer base {
+	:root {
+		color-scheme: dark;
 	}
-}
-:focus-visible {
-	outline: 2px solid var(--color-teal-500);
-	outline-offset: 2px;
-}
-a {
-	text-underline-offset: 3px;
-}
-summary {
-	cursor: pointer;
-}
-input,
-select,
-textarea {
-	accent-color: var(--color-teal-600);
-}
-/* Les titres de page et de section partagent une même échelle sur tous les écrans. */
-h1 {
-	font-size: var(--text-2xl);
-	line-height: var(--text-2xl--line-height);
-	font-weight: 600;
-	letter-spacing: var(--tracking-tight);
-	text-wrap: balance;
-}
-h2 {
-	font-size: var(--text-lg);
-	line-height: var(--text-lg--line-height);
-	font-weight: 600;
+	body {
+		background-color: #000;
+		color: var(--color-zinc-100);
+		font-feature-settings: "cv11", "ss01";
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+	:focus-visible {
+		outline: 2px solid var(--color-accent-400);
+		outline-offset: 2px;
+	}
+	a {
+		text-underline-offset: 3px;
+	}
+	summary {
+		cursor: pointer;
+	}
+	input,
+	select,
+	textarea {
+		accent-color: var(--color-accent-400);
+	}
+	/* Les titres de page et de section partagent une même échelle sur tous les écrans. */
+	h1 {
+		font-size: var(--text-3xl);
+		line-height: var(--text-3xl--line-height);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+	}
+	h2 {
+		font-size: var(--text-lg);
+		line-height: var(--text-lg--line-height);
+		font-weight: 600;
+		letter-spacing: -0.02em;
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {

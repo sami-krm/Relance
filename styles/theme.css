@@ -1,0 +1,32 @@
+/* Thème de Relance, d'après le template Framer « Projectise » : fond noir, surfaces translucides, accent pervenche.
+   Ce fichier contient les directives propres à Tailwind (@custom-variant, @theme). Il est hors de src/ parce que
+   le lint (Biome) les refuse tant que css.parser.tailwindDirectives n'est pas activé dans biome.json. */
+
+/* L'interface est toujours sombre : toutes les variantes dark: s'appliquent, quel que soit le réglage du système. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+	--font-sans:
+		"Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+		Roboto, "Helvetica Neue", Arial, sans-serif;
+
+	/* Accent pervenche (#949DFF) et lavande, repris du template. */
+	--color-accent-50: #f2f3ff;
+	--color-accent-100: #e6e8ff;
+	--color-accent-200: #cfd3ff;
+	--color-accent-300: #b3b9ff;
+	--color-accent-400: #949dff;
+	--color-accent-500: #7680f5;
+	--color-accent-600: #5d64e0;
+	--color-accent-700: #4b50bd;
+	--color-accent-800: #3d4199;
+	--color-accent-900: #33377a;
+	--color-accent-950: #1f2147;
+	--color-lavande: #e0cbff;
+
+	/* Neutres plus profonds pour un fond noir. */
+	--color-zinc-950: #000000;
+	--color-zinc-900: #0c0c0e;
+	--color-zinc-800: #1d1d21;
+	--color-zinc-700: #2d2d32;
+}

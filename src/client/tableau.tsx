@@ -60,10 +60,10 @@ function Demarrage() {
 					<li key={vers}>
 						<Link
 							to={vers}
-							className={`${carte} h-full transition-colors hover:border-teal-300 dark:hover:border-teal-800`}
+							className={`${carte} h-full transition-colors hover:border-accent-300 dark:hover:border-accent-800`}
 						>
 							<span className="flex items-center gap-3">
-								<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-sm font-semibold text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+								<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-50 text-sm font-semibold text-accent-800 dark:bg-accent-950 dark:text-accent-200">
 									{i + 1}
 								</span>
 								<span className="font-semibold">{titre}</span>
