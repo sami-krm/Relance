@@ -83,6 +83,12 @@
 - Le modèle n'utilise que ces données et écrit « [à compléter] » plutôt que d'inventer. Le texte reste un brouillon modifiable.
 - **10 brouillons par jour et par compte** ; quota atteint ou service indisponible : Relance le dit, sans repli vers un service payant.
 
+### 📨 Candidature assistée (V2)
+- Depuis une candidature : mode d'envoi, réponses au formulaire, **informations manquantes** signalées.
+- **Aperçu obligatoire** avant envoi : entreprise, poste, destinataire, lien, CV, lettre, réponses et coordonnées partagées, avec « Modifier », « Annuler » et « Confirmer l'envoi ».
+- Relance n'envoie rien elle-même : **e-mail préparé** dans votre messagerie (CV à joindre) ou **site de l'offre** ouvert pour y postuler.
+- À la confirmation, la candidature passe à « Envoyée » et **ce qui a été transmis est conservé**.
+
 ### 📊 Tableau de bord et données
 - Candidatures en cours, envoyées dans la semaine et le mois, entretiens à venir, rappels, réponses et **taux de réponse**, répartition par statut.
 - **Export CSV** des candidatures, prêt pour Excel.

@@ -27,6 +27,7 @@ import {
 	statuts,
 } from "../shared/schemas";
 import { api, json } from "./api";
+import { PreparerEnvoi } from "./envoi";
 import { BrouillonsIa } from "./ia";
 import { RappelsCandidature } from "./rappels";
 import { useRessource } from "./repertoire";
@@ -1040,6 +1041,8 @@ export function PageCandidature() {
 					<p className="mt-2 whitespace-pre-line">{c.lettre}</p>
 				</details>
 			)}
+
+			<PreparerEnvoi c={c} />
 
 			<BrouillonsIa
 				candidatureId={c.id}

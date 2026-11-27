@@ -8,8 +8,17 @@ import {
 	entreprise,
 	evenement,
 	offre,
+	profil,
+	user,
 } from "../db/schema";
-import { candidatureSchema, reponseSchema } from "../shared/schemas";
+import {
+	type ApercuEnvoi,
+	candidatureSchema,
+	type ModeEnvoi,
+	modesEnvoi,
+	reponseSchema,
+	sectionsProfil,
+} from "../shared/schemas";
 import { relanceAuto } from "./rappels";
 import { bd, type Contexte, exigerSession } from "./session";
 
@@ -84,6 +93,99 @@ const evenementStatut = (candidatureId: string, statut: string) => ({
 	statut,
 	date: aujourdhui(),
 });
+
+const champsCoordonnees = ["nom", "email", "telephone", "ville", "lien"];
+const libelleChamp: Record<string, string> = Object.fromEntries([
+	["email", "Adresse e-mail"],
+	...sectionsProfil.flatMap((s) => s.champs.map((ch) => [ch.cle, ch.libelle])),
+]);
+
+// L'aperçu de l'envoi : ce qui est affiché est exactement ce qui sera conservé à la confirmation.
+async function apercuEnvoi(
+	c: C,
+	mode: ModeEnvoi,
+): Promise<(ApercuEnvoi & { statut: string; id: string }) | undefined> {
+	const db = bd(c.env);
+	const userId = c.var.userId;
+	const ligne = await db
+		.select({
+			id: candidature.id,
+			statut: candidature.statut,
+			poste: candidature.poste,
+			lien: candidature.lien,
+			lettre: candidature.lettre,
+			reponses: candidature.reponsesFormulaire,
+			entreprise: entreprise.nom,
+			emailContact: contact.email,
+			cv: document.nom,
+		})
+		.from(candidature)
+		.innerJoin(entreprise, eq(candidature.entrepriseId, entreprise.id))
+		.leftJoin(contact, eq(candidature.contactId, contact.id))
+		.leftJoin(document, eq(candidature.cvId, document.id))
+		.where(duCompte(c))
+		.get();
+	if (!ligne) return undefined;
+	const [p, compte] = await Promise.all([
+		db
+			.select({ donnees: profil.donnees })
+			.from(profil)
+			.where(eq(profil.userId, userId))
+			.get(),
+		db
+			.select({ email: user.email })
+			.from(user)
+			.where(eq(user.id, userId))
+			.get(),
+	]);
+	const valeurs: Record<string, string | undefined> = {
+		...p?.donnees.valeurs,
+		email: compte?.email,
+	};
+	const partages = new Set(p?.donnees.partages ?? []);
+	// Un e-mail part de votre adresse : elle est toujours transmise dans ce mode.
+	if (mode === "email") partages.add("email");
+	const coordonnees = champsCoordonnees
+		.filter((k) => partages.has(k) && valeurs[k]?.trim())
+		.map((k) => ({
+			libelle: libelleChamp[k],
+			valeur: valeurs[k]?.trim() ?? "",
+		}));
+
+	let hote = "";
+	try {
+		hote = ligne.lien ? new URL(ligne.lien).hostname : "";
+	} catch {}
+	const destinataire = mode === "email" ? (ligne.emailContact ?? "") : hote;
+	const manquants = [
+		!ligne.cv && "Le CV",
+		!ligne.lettre && "La lettre de motivation",
+		!valeurs.nom?.trim() && "Votre nom (dans le profil)",
+	].filter((x): x is string => !!x);
+	return {
+		id: ligne.id,
+		statut: ligne.statut,
+		mode,
+		date: aujourdhui(),
+		entreprise: ligne.entreprise,
+		poste: ligne.poste,
+		destinataire,
+		lien: ligne.lien,
+		cv: ligne.cv ?? "",
+		lettre: ligne.lettre,
+		reponses: ligne.reponses,
+		coordonnees,
+		manquants,
+		bloquant: destinataire
+			? ""
+			: mode === "email"
+				? "Ajoutez un contact avec une adresse e-mail à cette candidature."
+				: "Ajoutez le lien de l'offre à cette candidature.",
+	};
+}
+
+const lireMode = (v: unknown): ModeEnvoi | undefined =>
+	typeof v === "string" && v in modesEnvoi ? (v as ModeEnvoi) : undefined;
 
 export const routesCandidatures = new Hono<Contexte>()
 	.use(exigerSession)
@@ -180,6 +282,44 @@ export const routesCandidatures = new Hono<Contexte>()
 			]);
 		else await maj;
 		return c.body(null, 204);
+	})
+	.get("/:id/envoi", async (c) => {
+		const mode = lireMode(c.req.query("mode"));
+		if (!mode) return c.json({ message: "Mode d'envoi invalide." }, 400);
+		const a = await apercuEnvoi(c, mode);
+		if (!a) return c.json({ message: "Candidature introuvable." }, 404);
+		const { id: _id, statut: _statut, ...apercu } = a;
+		return c.json<ApercuEnvoi>(apercu);
+	})
+	// Confirmation de l'envoi : la candidature passe à « Envoyée » et ce qui est transmis est conservé.
+	.post("/:id/envoi", async (c) => {
+		const corps = await c.req
+			.json<{ mode?: unknown }>()
+			.catch(() => ({}) as { mode?: unknown });
+		const mode = lireMode(corps.mode);
+		if (!mode) return c.json({ message: "Mode d'envoi invalide." }, 400);
+		const a = await apercuEnvoi(c, mode);
+		if (!a) return c.json({ message: "Candidature introuvable." }, 404);
+		if (a.bloquant) return c.json({ message: a.bloquant }, 400);
+		if (a.statut !== "brouillon")
+			return c.json({ message: "Cette candidature est déjà envoyée." }, 409);
+		const { id, statut: _statut, manquants: _m, bloquant: _b, ...envoi } = a;
+		const db = bd(c.env);
+		await db.batch([
+			db
+				.update(candidature)
+				.set({
+					statut: "envoyee",
+					dateEnvoi: envoi.date,
+					canal: mode === "email" ? "E-mail" : "Site de l'offre",
+					envoi,
+					updatedAt: new Date(),
+				})
+				.where(duCompte(c)),
+			db.insert(evenement).values(evenementStatut(id, "envoyee")),
+			...(await relanceAuto(c.env, c.var.userId, id, envoi.poste, envoi.date)),
+		]);
+		return c.json(envoi);
 	})
 	.delete("/:id", async (c) => {
 		const lignes = await bd(c.env)

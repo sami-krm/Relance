@@ -225,6 +225,7 @@ export const candidatureSchema = z.object({
 	source: texte(),
 	lien: lienWeb,
 	lettre: texte(20000),
+	reponsesFormulaire: texte(20000),
 	notes: texte(5000),
 	etiquettes: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
 });
@@ -241,6 +242,7 @@ export type Candidature = Omit<
 	offreId: string | null;
 	contactId: string | null;
 	cvId: string | null;
+	envoi: Envoi | null;
 	createdAt: string;
 	updatedAt: string;
 };
@@ -438,4 +440,28 @@ export type DonneesIa = {
 	service: string;
 	profil: { libelle: string; valeur: string }[];
 	candidature: { libelle: string; valeur: string }[];
+};
+
+// Candidature assistée (V2) : Relance prépare, l'utilisateur envoie lui-même.
+export const modesEnvoi = {
+	email: "E-mail préparé, envoyé depuis votre messagerie",
+	site: "Candidature sur le site de l'offre",
+} as const;
+export type ModeEnvoi = keyof typeof modesEnvoi;
+export type Envoi = {
+	mode: ModeEnvoi;
+	date: string;
+	entreprise: string;
+	poste: string;
+	destinataire: string;
+	lien: string;
+	cv: string;
+	lettre: string;
+	reponses: string;
+	coordonnees: { libelle: string; valeur: string }[];
+};
+export type ApercuEnvoi = Envoi & {
+	manquants: string[];
+	// Sans destinataire (e-mail du contact ou lien de l'offre), l'envoi ne peut pas être confirmé.
+	bloquant: string;
 };

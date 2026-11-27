@@ -6,7 +6,7 @@ import {
 	text,
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import type { Profil } from "../shared/schemas";
+import type { Envoi, Profil } from "../shared/schemas";
 
 const now = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
 const date = (nom: string) => integer(nom, { mode: "timestamp_ms" });
@@ -219,6 +219,10 @@ export const candidature = sqliteTable(
 		source: texte("source"),
 		lien: texte("lien"),
 		lettre: texte("lettre"),
+		// Réponses préparées pour le formulaire de candidature (V2).
+		reponsesFormulaire: texte("reponses_formulaire"),
+		// Ce qui a été transmis, figé au moment de l'envoi confirmé (V2).
+		envoi: text("envoi", { mode: "json" }).$type<Envoi>(),
 		notes: texte("notes"),
 		etiquettes: text("etiquettes", { mode: "json" })
 			.$type<string[]>()
