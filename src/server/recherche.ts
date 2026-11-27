@@ -174,23 +174,28 @@ export const routesRecherche = new Hono<Contexte>()
 		if (!motsCles && !ville)
 			return c.json({ message: "Indiquez des mots-clés ou une ville." }, 400);
 
+		const avertissements: string[] = [];
 		let commune: Commune | undefined;
+		// Le lieu vient souvent du profil, en texte libre (« Peu importe la ville ») : on cherche alors partout.
 		if (ville) {
 			commune = await trouverCommune(ville).catch(() => undefined);
 			if (!commune)
-				return c.json({ message: `Ville introuvable : « ${ville} ».` }, 400);
+				avertissements.push(
+					`Ville « ${ville} » non reconnue : la recherche porte sur toute la France.`,
+				);
 		}
 
 		let metiers: [string, string][] = [];
-		let avertissement: string | undefined;
 		if (motsCles)
 			try {
 				metiers = await metiersRome(c.env, motsCles);
 			} catch (e) {
 				console.error("recherche ROMEO", e);
-				avertissement =
-					"Les métiers n'ont pas pu être reconnus : seuls les intitulés contenant vos mots-clés sont affichés.";
+				avertissements.push(
+					"Les métiers n'ont pas pu être reconnus : seuls les intitulés contenant vos mots-clés sont affichés.",
+				);
 			}
+		const avertissement = avertissements.join(" ") || undefined;
 		// Sans métier ni lieu, La bonne alternance renverrait toute la France sans rapport avec la recherche.
 		if (!metiers.length && !commune)
 			return c.json<ResultatRecherche>({

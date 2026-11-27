@@ -143,7 +143,6 @@ it("indique une source en panne sans planter", async () => {
 it("refuse une recherche invalide ou sans connexion", async () => {
 	const cookie = await connecter("recherche-5@exemple.test");
 	simuler({});
-	expect((await api(cookie, "/recherche?ville=Introuvable")).status).toBe(400);
 	expect((await api(cookie, "/recherche?distance=999")).status).toBe(400);
 	expect((await api(cookie, "/recherche")).status).toBe(400);
 	expect((await api("", "/recherche?motsCles=web")).status).toBe(401);
@@ -227,4 +226,20 @@ it("ne montre qu'une fois une annonce publiée deux fois", async () => {
 		await api(cookie, "/recherche?motsCles=web&ville=Lyon")
 	).json<ResultatRecherche>();
 	expect(r.offres.map((o) => o.idSource)).toEqual(["a"]);
+});
+
+it("cherche dans toute la France quand la ville n'est pas reconnue", async () => {
+	const cookie = await connecter("recherche-ville@exemple.test");
+	const appels = simuler({ lba: [offreLBA("a", "Développeur web")] });
+	const res = await api(
+		cookie,
+		"/recherche?motsCles=web&ville=Peu%20importe%20Introuvable",
+	);
+	expect(res.status).toBe(200);
+	const r = await res.json<ResultatRecherche>();
+	expect(r.avertissement).toContain("non reconnue");
+	expect(r.offres).toHaveLength(1);
+	const lba = new URL(appels.find((a) => a.url.includes("job/v1"))?.url ?? "");
+	expect(lba.searchParams.has("latitude")).toBe(false);
+	expect(lba.searchParams.get("romes")).toBe("M1805,E1205");
 });
