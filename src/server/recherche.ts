@@ -31,7 +31,9 @@ async function jetonFranceTravail(env: Env) {
 			scope: "api_offresdemploiv2 o2dsoffre",
 		}),
 	});
-	if (!res.ok) throw new Error(`jeton ${res.status}`);
+	// La réponse d'erreur OAuth (error, error_description) ne contient pas de secret.
+	if (!res.ok)
+		throw new Error(`jeton ${res.status} ${(await res.text()).slice(0, 200)}`);
 	const { access_token, expires_in } = await res.json<{
 		access_token: string;
 		expires_in: number;
@@ -133,7 +135,18 @@ async function bonneAlternance(
 		headers: { authorization: `Bearer ${env.LBA_API_TOKEN}` },
 	});
 	if (!res.ok) throw new Error(`offres ${res.status}`);
-	const { jobs = [] } = await res.json<{ jobs?: OffreLBA[] }>();
+	const texte = await res.text();
+	const { jobs = [], recruiters = [] } = JSON.parse(texte) as {
+		jobs?: OffreLBA[];
+		recruiters?: unknown[];
+	};
+	// Diagnostic temporaire du coût CPU : à retirer une fois mesuré.
+	console.log("lba", {
+		octets: texte.length,
+		jobs: jobs.length,
+		recruiters: recruiters.length,
+		octetsRecruiters: JSON.stringify(recruiters).length,
+	});
 	return jobs;
 }
 
