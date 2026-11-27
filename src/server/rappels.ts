@@ -246,7 +246,15 @@ export const doitEnvoyer = (maintenant: Date) =>
 const dateFr = (iso: string) => iso.split("-").reverse().join("/");
 
 // Un e-mail par compte avec ses rappels du jour et en retard pas encore envoyés.
-export async function envoyerRappels(env: Env, aujourdhui: string) {
+// L'offre gratuite limite une exécution à 50 appels sortants (Brevo) et 50 requêtes à la base.
+// shortcut: au-delà de 45 comptes le même matin, les suivants reçoivent leur e-mail le lendemain ; passer à l'offre payante ou à une file d'attente avant.
+const ENVOIS_MAX = 45;
+
+export async function envoyerRappels(
+	env: Env,
+	aujourdhui: string,
+	envoisMax = ENVOIS_MAX,
+) {
 	const db = bd(env);
 	const dus = await db
 		.select({
@@ -286,7 +294,8 @@ export async function envoyerRappels(env: Env, aujourdhui: string) {
 		dus.filter((r) => r.emailsRappel !== false),
 		(r) => r.email,
 	);
-	for (const [email, rappels] of parCompte) {
+	const envoyes: string[] = [];
+	for (const [email, rappels] of [...parCompte].slice(0, envoisMax)) {
 		const lignes = rappels.map(
 			(r) =>
 				`- ${typesRappel[r.type as keyof typeof typesRappel] ?? r.type} : ${r.titre}${r.entreprise ? ` (${r.entreprise})` : ""}${r.date < aujourdhui ? `, prévu le ${dateFr(r.date)}` : ""}`,
@@ -300,19 +309,16 @@ export async function envoyerRappels(env: Env, aujourdhui: string) {
 						: "Relance : un rappel aujourd'hui",
 				text: `Bonjour,\n\nVos rappels sur Relance :\n${lignes.join("\n")}\n\nPour les voir : ${env.BETTER_AUTH_URL}/rappels\nPour ne plus recevoir ces e-mails : ${env.BETTER_AUTH_URL}/parametres\n\nRelance`,
 			});
-			await db
-				.update(rappel)
-				.set({ emailEnvoye: true })
-				.where(
-					inArray(
-						rappel.id,
-						rappels.map((r) => r.id),
-					),
-				);
+			envoyes.push(...rappels.map((r) => r.id));
 		} catch (e) {
 			// Un envoi raté ne bloque pas les autres comptes ; il sera retenté demain.
 			console.error("Rappels non envoyés", e);
 		}
 	}
-	return parCompte.size;
+	// Une seule requête pour tous les rappels envoyés, au lieu d'une par compte.
+	if (envoyes.length)
+		await db
+			.update(rappel)
+			.set({ emailEnvoye: true })
+			.where(inArray(rappel.id, envoyes));
 }

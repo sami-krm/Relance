@@ -186,6 +186,29 @@ it("envoie un seul e-mail par compte avec les rappels dus, une seule fois, sauf 
 	expect(pour("r4a@example.com")).toHaveLength(1);
 });
 
+it("plafonne les e-mails du matin et envoie le reste le lendemain", async () => {
+	for (const email of ["plafond-a@exemple.test", "plafond-b@exemple.test"])
+		await creer(await connecter(email), "/rappels", {
+			type: "tache",
+			titre: "Plafond",
+			date: "2027-03-01",
+		});
+	const envois: string[] = [];
+	vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) => {
+		envois.push(JSON.parse(String(init?.body)).to[0].email);
+		return Response.json({}, { status: 201 });
+	});
+	// Base partagée entre les tests du fichier : d'autres comptes ont aussi des rappels dus.
+	for (let passage = 0; passage < 20; passage++) {
+		const avant = envois.length;
+		await envoyerRappels(env, "2027-03-01", 1);
+		expect(envois.length - avant).toBeLessThanOrEqual(1);
+		if (envois.length === avant) break;
+	}
+	for (const email of ["plafond-a@exemple.test", "plafond-b@exemple.test"])
+		expect(envois.filter((e) => e === email)).toHaveLength(1);
+});
+
 it("n'envoie qu'à 7 h heure de Paris, été comme hiver", () => {
 	expect(doitEnvoyer(new Date("2026-12-15T06:00:00Z"))).toBe(true);
 	expect(doitEnvoyer(new Date("2026-12-15T05:00:00Z"))).toBe(false);

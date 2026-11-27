@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
 import { entreprise, offre } from "../db/schema";
 import {
 	lienSchema,
@@ -170,9 +171,22 @@ const motsDe = (s: string) =>
 		.split(/[^a-z0-9]+/)
 		.filter(Boolean);
 
+// Un compte ne peut pas épuiser seul la clé La bonne alternance, partagée par tous, ni faire lire des pages en boucle.
+const limiter = createMiddleware<Contexte>(async (c, next) => {
+	const { success } = await c.env.LIMITE_RECHERCHE.limit({
+		key: c.var.userId,
+	});
+	if (!success)
+		return c.json(
+			{ message: "Trop de recherches. Réessayez dans une minute." },
+			429,
+		);
+	await next();
+});
+
 export const routesRecherche = new Hono<Contexte>()
 	.use(exigerSession)
-	.get("/", async (c) => {
+	.get("/", limiter, async (c) => {
 		const r = rechercheSchema.safeParse(c.req.query());
 		if (!r.success) return c.json({ message: "Recherche invalide." }, 400);
 		const { motsCles, ville, distance } = r.data;
@@ -334,7 +348,7 @@ export const routesRecherche = new Hono<Contexte>()
 		return c.json({ id }, 201);
 	})
 	// Lit une page d'offre pour préremplir le formulaire ; rien n'est enregistré ici.
-	.post("/lien", async (c) => {
+	.post("/lien", limiter, async (c) => {
 		const r = lienSchema.safeParse(await c.req.json().catch(() => null));
 		if (!r.success) return c.json({ message: "Lien invalide." }, 400);
 		const offre = await lireOffre(r.data.url).catch((e) => {

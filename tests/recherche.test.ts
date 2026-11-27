@@ -294,3 +294,23 @@ it("ajoute une offre dont l'employeur reste anonyme", async () => {
 	});
 	expect(res.status).toBe(201);
 });
+
+it("limite les recherches et les lectures de liens par compte", async () => {
+	const cookie = await connecter("recherche-limite@exemple.test");
+	simuler({});
+	const statuts: number[] = [];
+	for (let i = 0; i < 21; i++)
+		statuts.push((await api(cookie, "/recherche?ville=Lyon")).status);
+	expect(statuts.slice(0, 20).every((s) => s === 200)).toBe(true);
+	expect(statuts[20]).toBe(429);
+	const lien = await api(cookie, "/recherche/lien", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ url: "https://www.exemple.fr/offre" }),
+	});
+	expect(lien.status).toBe(429);
+	// Un autre compte n'est pas touché.
+	const autre = await connecter("recherche-limite-2@exemple.test");
+	simuler({});
+	expect((await api(autre, "/recherche?ville=Lyon")).status).toBe(200);
+});
